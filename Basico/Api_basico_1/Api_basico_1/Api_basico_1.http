@@ -1,0 +1,6 @@
+@Api_basico_1_HostAddress = http://localhost:5052
+
+GET {{Api_basico_1_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

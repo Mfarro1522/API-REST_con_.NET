@@ -1,0 +1,16 @@
+﻿<body>
+
+    <h1>Cliente API</h1>
+
+    <button id="btnFetch">Obtener datos</button>
+    <div id="resultado"></div>
+
+    <script>
+        document.getElementById('btnFetch').addEventListener('click', () => {
+            fetch('http://localhost:5052/weatherforecast')
+                .then(r => r.json())
+                .then(data => document.getElementById('resultado').innerText = JSON.stringify(data))
+                .catch(err => document.getElementById('resultado').innerText = err);
+        });
+    </script>
+</body>
