@@ -1,0 +1,1032 @@
+<!--
+    Frontend HTML generado para API
+    
+    Descripción:
+    Este es un frontend HTML generado por IA diseñado para servir como interfaz
+    de usuario de una API personalizada construida por el desarrollador. El diseño,
+    estilos y componentes interactivos han sido generados automáticamente para
+    proporcionar un front-end funcional y responsivo que se comunica con los
+    endpoints del backend.
+    
+    Propósito:
+    Proporcionar una interfaz web completa para acceder e interactuar con la
+    funcionalidad de la API personalizada.
+    
+    Nota:
+    La implementación de la API (lógica del backend, endpoints y procesamiento
+    de datos) fue creada por el desarrollador. Este HTML sirve como capa de
+    presentación.
+-->
+
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ollama Chat - Local Models</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1f2937;
+            --secondary: #111827;
+            --accent: #3b82f6;
+            --accent-light: #60a5fa;
+            --text: #f3f4f6;
+            --text-muted: #d1d5db;
+            --border: #374151;
+            --success: #10b981;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: var(--text);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* ===== SIDEBAR - API CONFIG ===== */
+        .sidebar {
+            width: 300px;
+            background: var(--secondary);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .config-section {
+            margin-bottom: 25px;
+        }
+
+        .config-section h3 {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 6px;
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            background: var(--primary);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 6px;
+            font-size: 13px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--success);
+            border-radius: 6px;
+            font-size: 12px;
+            color: var(--success);
+            margin-top: 10px;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .test-btn {
+            width: 100%;
+            padding: 10px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .test-btn:hover {
+            background: var(--accent-light);
+            transform: translateY(-2px);
+        }
+
+        .test-btn:active {
+            transform: translateY(0);
+        }
+
+        /* ===== CHAT AREA ===== */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            padding: 20px;
+            background: var(--primary);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chat-header h1 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .model-selector {
+            padding: 6px 12px;
+            background: var(--secondary);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            scroll-behavior: smooth;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: var(--secondary);
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        .message {
+            display: flex;
+            gap: 12px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            word-wrap: break-word;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .message.user .message-content {
+            background: var(--accent);
+            color: white;
+            border-radius: 12px 0 12px 12px;
+        }
+
+        .message.assistant .message-content {
+            background: var(--primary);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 0 12px 12px 12px;
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 12px 16px;
+            background: var(--primary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            width: fit-content;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: var(--text-muted);
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .dot:nth-child(2) { animation-delay: 0.2s; }
+        .dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 60%, 100% { opacity: 0.3; }
+            30% { opacity: 1; }
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        /* ===== INPUT AREA ===== */
+        .chat-input-area {
+            padding: 20px;
+            background: var(--primary);
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            display: flex;
+            gap: 8px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px;
+            background: var(--secondary);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+            resize: none;
+            max-height: 100px;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .send-btn {
+            padding: 12px 20px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .send-btn:hover:not(:disabled) {
+            background: var(--accent-light);
+            transform: translateY(-2px);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 250px;
+            }
+
+            .message-content {
+                max-width: 85%;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+                max-height: 200px;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .chat-container {
+                height: auto;
+                flex: 1;
+            }
+
+            .message-content {
+                max-width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- SIDEBAR - API CONFIGURATION -->
+        <div class="sidebar">
+            <div class="sidebar-header">⚙️ Configuración</div>
+
+            <!-- ═══════════════════════════════════════════════════════════════════════
+                 SECCIÓN DE CONFIGURACIÓN DE LA API - OLLAMA
+                 ═══════════════════════════════════════════════════════════════════════
+                 
+                 Esta sección configura la conexión con el servidor Ollama local.
+                 Ollama expone una API REST en el puerto 11434 por defecto.
+                 
+                 ENDPOINTS DE OLLAMA UTILIZADOS:
+                 ───────────────────────────────────────────────────────────────────────
+                 1. GET  /api/tags      → Lista todos los modelos disponibles
+                 2. POST /api/generate  → Genera una respuesta del modelo
+                 
+                 ESTRUCTURA DE LA PETICIÓN POST /api/generate:
+                 ───────────────────────────────────────────────────────────────────────
+                 {
+                     "model": "nombre-del-modelo",  // ej: "llama2", "mistral"
+                     "prompt": "tu mensaje aquí",   // texto de entrada
+                     "temperature": 0.7,            // 0=determinístico, 2=muy creativo
+                     "stream": false                // true=respuesta en streaming
+                 }
+                 
+                 ESTRUCTURA DE LA RESPUESTA:
+                 ───────────────────────────────────────────────────────────────────────
+                 {
+                     "model": "llama2",
+                     "created_at": "2024-01-15T10:30:00Z",
+                     "response": "Texto de respuesta del modelo...",
+                     "done": true
+                 }
+                 
+                 REQUISITOS PREVIOS:
+                 ───────────────────────────────────────────────────────────────────────
+                 • Tener Ollama instalado: https://ollama.com/download
+                 • Ejecutar: ollama serve (inicia el servidor en puerto 11434)
+                 • Descargar modelos: ollama pull llama2 (o el modelo deseado)
+                 • Verificar CORS si accedes desde otro dominio
+                 
+                 ═══════════════════════════════════════════════════════════════════════ -->
+
+            <!-- CONFIGURACIÓN DEL SERVIDOR -->
+            <div class="config-section">
+                <h3>🔌 Servidor Ollama</h3>
+                <div class="form-group">
+                    <label for="apiUrl">URL del Servidor</label>
+                    <!-- 
+                         URL base del servidor Ollama.
+                         Por defecto: http://localhost:11434
+                         
+                         Si Ollama está en otra máquina:
+                         • Misma red: http://192.168.1.100:11434
+                         • Docker: http://host.docker.internal:11434
+                         • Remoto: https://tu-servidor-ollama.com
+                    -->
+                    <input type="text" id="apiUrl" value="http://localhost:11434" placeholder="http://localhost:11434">
+                </div>
+            </div>
+
+            <!-- SELECCIÓN DEL MODELO -->
+            <div class="config-section">
+                <h3>🤖 Modelo</h3>
+                <div class="form-group">
+                    <label for="modelSelect">Seleccionar Modelo</label>
+                    <!-- 
+                         Modelos disponibles en Ollama.
+                         Deben estar previamente descargados con: ollama pull <nombre>
+                         
+                         Modelos populares:
+                         • llama2/llama3 - Meta Llama (buen balance)
+                         • mistral - Mistral AI (rápido y eficiente)
+                         • codellama - Especializado en código
+                         • neural-chat - Intel Neural Chat
+                         • dolphin-mixtral - Dolphin Mixtral (sin censura)
+                    -->
+                    <select id="modelSelect">
+                    </select>
+                </div>
+            </div>
+
+            <!-- PARÁMETROS DE GENERACIÓN -->
+            <div class="config-section">
+                <h3>⚙️ Parámetros</h3>
+                <div class="form-group">
+                    <label for="temperature">Temperatura (creatividad)</label>
+                    <!-- 
+                         TEMPERATURA: Controla la aleatoriedad de las respuestas
+                         • 0.0 - 0.3: Respuestas determinísticas, conservadoras
+                         • 0.4 - 0.7: Balance entre coherencia y creatividad (recomendado)
+                         • 0.8 - 1.2: Más creativo, menos predecible
+                         • 1.3 - 2.0: Muy creativo, puede ser incoherente
+                    -->
+                    <input type="range" id="temperature" min="0" max="2" step="0.1" value="0.7">
+                    <small style="color: var(--text-muted);">Valor: <span id="tempValue">0.7</span></small>
+                </div>
+            </div>
+
+            <!-- BOTÓN DE PRUEBA DE CONEXIÓN -->
+            <!-- Llama a testConnection() que hace GET a /api/tags -->
+            <button class="test-btn" onclick="testConnection()">🧪 Probar Conexión</button>
+
+            <!-- INDICADOR DE ESTADO DE CONEXIÓN -->
+            <div id="status" style="margin-top: auto;">
+                <div class="status-indicator" id="connectionStatus" style="display: none;">
+                    <div class="status-dot"></div>
+                    Conectado
+                </div>
+            </div>
+            <!-- ═══════════════════════════════════════════════════════════════════════
+                 FIN CONFIGURACIÓN API
+                 ═══════════════════════════════════════════════════════════════════════ -->
+        </div>
+
+        <!-- CHAT AREA -->
+        <div class="chat-container">
+            <div class="chat-header">
+                <h1>🤖 Ollama Chat</h1>
+                <select class="model-selector" id="headerModel">
+                </select>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+                <div class="empty-state">
+                    <div class="empty-state-icon">💬</div>
+                    <p>Inicia una conversación con tu modelo local</p>
+                    <small style="color: var(--text-muted); margin-top: 8px;">Configura tu servidor Ollama a la izquierda</small>
+                </div>
+            </div>
+
+            <div class="chat-input-area">
+                <div class="input-wrapper">
+                    <textarea class="chat-input" id="messageInput" placeholder="Escribe tu mensaje..." rows="1"></textarea>
+                    <button class="send-btn" id="sendBtn" onclick="sendMessage()" disabled>
+                        <span id="btnText">Enviar</span>
+                        <span id="spinner" style="display: none;" class="spinner"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * ═════════════════════════════════════════════════════════════════════════════════
+         * OLLAMA CHAT - CLIENTE JAVASCRIPT
+         * ═════════════════════════════════════════════════════════════════════════════════
+         * 
+         * Este script maneja la comunicación con la API REST de Ollama.
+         * 
+         * REFERENCIA DE API DE OLLAMA:
+         * ─────────────────────────────────────────────────────────────────────────────────
+         * Documentación oficial: https://github.com/ollama/ollama/blob/main/docs/api.md
+         * 
+         * ENDPOINTS UTILIZADOS:
+         * • GET  /api/tags      - Lista modelos instalados
+         * • POST /api/generate  - Genera texto con un modelo
+         * 
+         * CONFIGURACIÓN POR DEFECTO:
+         * • URL: http://localhost:11434
+         * • Modelo: llama2
+         * • Temperatura: 0.7
+         * 
+         * REQUISITOS:
+         * • Ollama instalado y ejecutándose
+         * • Modelos descargados (ollama pull <modelo>)
+         * • CORS configurado si se accede desde otro dominio
+         * 
+         * ═════════════════════════════════════════════════════════════════════════════════
+         */
+
+        // Referencias a elementos del DOM
+        const apiUrlInput = document.getElementById('apiUrl');
+        const modelSelect = document.getElementById('modelSelect');
+        const headerModel = document.getElementById('headerModel');
+        const temperatureInput = document.getElementById('temperature');
+        const tempValue = document.getElementById('tempValue');
+        const chatMessages = document.getElementById('chatMessages');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const connectionStatus = document.getElementById('connectionStatus');
+
+        let isLoading = false;
+
+        function clearModelSelectors() {
+            modelSelect.innerHTML = '';
+            headerModel.innerHTML = '';
+            modelSelect.disabled = true;
+            headerModel.disabled = true;
+            sendBtn.disabled = true;
+        }
+
+        function populateModelSelectors(models) {
+            modelSelect.innerHTML = '';
+            headerModel.innerHTML = '';
+
+            models.forEach((modelName) => {
+                const sidebarOption = document.createElement('option');
+                sidebarOption.value = modelName;
+                sidebarOption.textContent = modelName;
+                modelSelect.appendChild(sidebarOption);
+
+                const headerOption = document.createElement('option');
+                headerOption.value = modelName;
+                headerOption.textContent = modelName;
+                headerModel.appendChild(headerOption);
+            });
+
+            if (models.length > 0) {
+                modelSelect.value = models[0];
+                headerModel.value = models[0];
+                modelSelect.disabled = false;
+                headerModel.disabled = false;
+                sendBtn.disabled = isLoading;
+            } else {
+                clearModelSelectors();
+            }
+        }
+
+        async function loadModelsFromApi(showFeedback = false) {
+            try {
+                const apiUrl = apiUrlInput.value;
+                const response = await fetch(`${apiUrl}/api/tags`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                const models = (data.models || [])
+                    .map(m => m?.name)
+                    .filter(Boolean);
+
+                populateModelSelectors(models);
+
+                if (models.length > 0) {
+                    connectionStatus.style.display = 'flex';
+                    if (showFeedback) {
+                        alert(
+                            `✅ ¡Conexión exitosa!\n\n` +
+                            `Servidor: ${apiUrl}\n` +
+                            `Modelos disponibles: ${models.length}\n\n` +
+                            `Modelos instalados:\n• ${models.join('\n• ')}`
+                        );
+                    }
+                } else {
+                    connectionStatus.style.display = 'none';
+                    if (showFeedback) {
+                        alert('⚠️ La API respondió, pero no hay modelos instalados en Ollama.');
+                    }
+                }
+
+                return models;
+            } catch (error) {
+                console.error("[API Ollama] No se pudieron cargar modelos:", error);
+                clearModelSelectors();
+                connectionStatus.style.display = 'none';
+                if (showFeedback) {
+                    alert(
+                        `❌ Error de Conexión\n\n` +
+                        `No se pudo conectar a Ollama en:\n${apiUrlInput.value}\n\n` +
+                        `🔧 Verifica:\n` +
+                        `• Ollama está ejecutándose (ollama serve)\n` +
+                        `• La URL es correcta\n` +
+                        `• No hay firewall bloqueando el puerto 11434`
+                    );
+                }
+                return [];
+            }
+        }
+
+        clearModelSelectors();
+        loadModelsFromApi();
+
+        // Sincronizar selección de modelo
+        modelSelect.addEventListener('change', () => {
+            headerModel.value = modelSelect.value;
+        });
+
+        headerModel.addEventListener('change', () => {
+            modelSelect.value = headerModel.value;
+        });
+
+        // Actualizar valor de temperatura
+        temperatureInput.addEventListener('input', () => {
+            tempValue.textContent = temperatureInput.value;
+        });
+
+        // Auto-resize textarea
+        messageInput.addEventListener('input', () => {
+            messageInput.style.height = 'auto';
+            messageInput.style.height = Math.min(messageInput.scrollHeight, 100) + 'px';
+        });
+
+        // Enviar con Enter
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey && !isLoading) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        /**
+         * ═══════════════════════════════════════════════════════════════════════════════
+         * FUNCIÓN PRINCIPAL: sendMessage()
+         * ═══════════════════════════════════════════════════════════════════════════════
+         * 
+         * Envía el mensaje del usuario a la API de Ollama y muestra la respuesta.
+         * 
+         * FLUJO DE EJECUCIÓN:
+         * ───────────────────────────────────────────────────────────────────────────────
+         * 1. Valida que haya texto y no esté cargando
+         * 2. Muestra el mensaje del usuario en el chat
+         * 3. Muestra indicador de "escribiendo..."
+         * 4. Construye el cuerpo de la petición (requestBody)
+         * 5. Realiza POST a /api/generate
+         * 6. Procesa la respuesta JSON
+         * 7. Muestra la respuesta del asistente
+         * 8. Maneja errores de conexión
+         * 
+         * ENDPOINT: POST {apiUrl}/api/generate
+         * 
+         * REQUEST BODY:
+         * ───────────────────────────────────────────────────────────────────────────────
+         * {
+         *     model: string       // Nombre del modelo seleccionado
+         *     prompt: string      // Mensaje del usuario
+         *     temperature: number // 0-2, controla creatividad
+         *     stream: boolean     // false = respuesta completa de una vez
+         * }
+         * 
+         * RESPONSE:
+         * ───────────────────────────────────────────────────────────────────────────────
+         * {
+         *     model: string,
+         *     created_at: string,
+         *     response: string,   // Texto generado por el modelo
+         *     done: boolean
+         * }
+         * 
+         * MANEJO DE ERRORES:
+         * ───────────────────────────────────────────────────────────────────────────────
+         * • Error HTTP (4xx, 5xx): Muestra código de error
+         * • Network error: Sugiere verificar servidor y URL
+         * • Modelo no encontrado: Sugiere descargar el modelo
+         * 
+         * ═══════════════════════════════════════════════════════════════════════════════
+         */
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message || isLoading) return;
+
+            if (!modelSelect.value) {
+                addMessage('❌ No hay modelo seleccionado. Conecta la API y carga modelos primero.', 'assistant');
+                return;
+            }
+
+            // ─── ACTIVAR ESTADO DE CARGA ───
+            isLoading = true;
+            sendBtn.disabled = true;
+            document.getElementById('btnText').style.display = 'none';
+            document.getElementById('spinner').style.display = 'inline-block';
+
+            // ─── LIMPIAR INPUT ───
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+
+            // ─── MOSTRAR MENSAJE DEL USUARIO ───
+            addMessage(message, 'user');
+
+            // ─── MOSTRAR INDICADOR DE ESCRITURA ───
+            const typingId = showTypingIndicator();
+
+            try {
+                // ═══════════════════════════════════════════════════════════════════
+                // CONFIGURACIÓN DE LA PETICIÓN A OLLAMA
+                // ═══════════════════════════════════════════════════════════════════
+                
+                // Obtener valores de la configuración del usuario
+                const apiUrl = apiUrlInput.value;           // ej: "http://localhost:11434"
+                const model = modelSelect.value;            // ej: "llama2", "mistral"
+                const temperature = parseFloat(temperatureInput.value); // ej: 0.7
+
+                // Construir el cuerpo de la petición según documentación de Ollama
+                const requestBody = {
+                    model: model,           // Modelo a utilizar (debe estar descargado)
+                    prompt: message,        // Prompt/mensaje del usuario
+                    temperature: temperature, // Control de creatividad (0-2)
+                    stream: false           // false = esperar respuesta completa
+                };
+
+                // Log para debugging
+                console.log("[API Ollama] Enviando petición:", {
+                    endpoint: `${apiUrl}/api/generate`,
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: requestBody
+                });
+
+                // ═══════════════════════════════════════════════════════════════════
+                // LLAMADA FETCH A LA API DE OLLAMA
+                // ═══════════════════════════════════════════════════════════════════
+                const response = await fetch(`${apiUrl}/api/generate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',  // Ollama requiere JSON
+                    },
+                    body: JSON.stringify(requestBody)  // Serializar objeto a JSON
+                });
+
+                // Verificar si la respuesta HTTP fue exitosa (2xx)
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status} - ${response.statusText}`);
+                }
+
+                // Parsear la respuesta JSON
+                const data = await response.json();
+                
+                // Extraer el texto generado por el modelo
+                // data.response contiene la respuesta del asistente
+                const assistantMessage = data.response || 'No response received';
+
+                console.log("[API Ollama] Respuesta recibida:", {
+                    model: data.model,
+                    response: assistantMessage,
+                    done: data.done
+                });
+
+                // ─── REMOVER INDICADOR DE ESCRITURA ───
+                removeTypingIndicator(typingId);
+
+                // ─── MOSTRAR RESPUESTA DEL ASISTENTE ───
+                addMessage(assistantMessage, 'assistant');
+
+            } catch (error) {
+                // ═══════════════════════════════════════════════════════════════════
+                // MANEJO DE ERRORES
+                // ═══════════════════════════════════════════════════════════════════
+                console.error("[API Ollama] Error en la petición:", error);
+                
+                removeTypingIndicator(typingId);
+                
+                // Mensaje de error detallado para el usuario
+                addMessage(
+                    `❌ Error de Conexión\n\n` +
+                    `No se pudo conectar a Ollama.\n\n` +
+                    `🔧 Solución:\n` +
+                    `1. Verifica que Ollama esté ejecutándose:\n` +
+                    `   ollama serve\n\n` +
+                    `2. Comprueba la URL del servidor:\n` +
+                    `   ${apiUrlInput.value}\n\n` +
+                    `3. Asegúrate de tener el modelo descargado:\n` +
+                    `   ollama pull ${modelSelect.value}\n\n` +
+                    `4. Si usas otro dominio, verifica CORS`,
+                    'assistant'
+                );
+            } finally {
+                // ─── RESTABLECER ESTADO ───
+                isLoading = false;
+                sendBtn.disabled = false;
+                document.getElementById('btnText').style.display = 'inline';
+                document.getElementById('spinner').style.display = 'none';
+                messageInput.focus();
+            }
+        }
+        /**
+         * ═══════════════════════════════════════════════════════════════════════════════
+         * FIN FUNCIÓN sendMessage()
+         * ═══════════════════════════════════════════════════════════════════════════════
+         */
+
+        /**
+         * ═══════════════════════════════════════════════════════════════════════════════
+         * FUNCIÓN AUXILIAR: addMessage()
+         * ═══════════════════════════════════════════════════════════════════════════════
+         * 
+         * Añade un mensaje al área de chat.
+         * 
+         * @param {string} text    - Contenido del mensaje
+         * @param {string} sender  - 'user' o 'assistant'
+         * 
+         * COMPORTAMIENTO:
+         * • Elimina el estado vacío si existe
+         * • Crea elementos DOM con animación slideIn
+         * • Auto-scroll al final del chat
+         * 
+         * ═══════════════════════════════════════════════════════════════════════════════
+         */
+        function addMessage(text, sender) {
+            // Eliminar estado vacío si existe
+            const emptyState = chatMessages.querySelector('.empty-state');
+            if (emptyState) emptyState.remove();
+
+            // Crear contenedor del mensaje
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+
+            // Crear contenido del mensaje
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.textContent = text;
+
+            // Ensamblar y añadir al DOM
+            messageDiv.appendChild(contentDiv);
+            chatMessages.appendChild(messageDiv);
+            
+            // Auto-scroll al último mensaje
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        /**
+         * ═══════════════════════════════════════════════════════════════════════════════
+         * FUNCIÓN AUXILIAR: showTypingIndicator()
+         * ═══════════════════════════════════════════════════════════════════════════════
+         * 
+         * Muestra una animación de "escribiendo..." mientras se espera la respuesta.
+         * 
+         * @returns {number} ID único del indicador (para poder eliminarlo después)
+         * 
+         * USO:
+         * • Se muestra inmediatamente después del mensaje del usuario
+         * • Se elimina con removeTypingIndicator(id) al recibir respuesta
+         * 
+         * ═══════════════════════════════════════════════════════════════════════════════
+         */
+        function showTypingIndicator() {
+            const id = Date.now();  // Timestamp como ID único
+            
+            const typingDiv = document.createElement('div');
+            typingDiv.id = `typing-${id}`;
+            typingDiv.className = 'message assistant';
+            typingDiv.innerHTML = `
+                <div class="typing-indicator">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                </div>
+            `;
+            
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            return id;
+        }
+
+        /**
+         * ═══════════════════════════════════════════════════════════════════════════════
+         * FUNCIÓN AUXILIAR: removeTypingIndicator()
+         * ═══════════════════════════════════════════════════════════════════════════════
+         * 
+         * Elimina el indicador de "escribiendo..." del chat.
+         * 
+         * @param {number} id - ID del indicador devuelto por showTypingIndicator()
+         * 
+         * ═══════════════════════════════════════════════════════════════════════════════
+         */
+        function removeTypingIndicator(id) {
+            const typingDiv = document.getElementById(`typing-${id}`);
+            if (typingDiv) typingDiv.remove();
+        }
+
+        /**
+         * ═══════════════════════════════════════════════════════════════════════════════
+         * FUNCIÓN: testConnection()
+         * ═══════════════════════════════════════════════════════════════════════════════
+         * 
+         * Verifica la conectividad con el servidor Ollama y lista los modelos disponibles.
+         * 
+         * ENDPOINT: GET {apiUrl}/api/tags
+         * 
+         * DESCRIPCIÓN DEL ENDPOINT /api/tags:
+         * ───────────────────────────────────────────────────────────────────────────────
+         * Este endpoint de Ollama devuelve una lista de todos los modelos que están
+         * instalados localmente en el servidor.
+         * 
+         * RESPONSE:
+         * ───────────────────────────────────────────────────────────────────────────────
+         * {
+         *     "models": [
+         *         {
+         *             "name": "llama2:latest",
+         *             "modified_at": "2024-01-15T10:30:00Z",
+         *             "size": 3825819519,
+         *             "digest": "sha256:..."
+         *         },
+         *         {
+         *             "name": "mistral:latest",
+         *             "modified_at": "2024-01-15T11:00:00Z",
+         *             "size": 4112102510,
+         *             "digest": "sha256:..."
+         *         }
+         *     ]
+         * }
+         * 
+         * USO:
+         * ───────────────────────────────────────────────────────────────────────────────
+         * • Se ejecuta al hacer clic en "🧪 Probar Conexión"
+         * • Muestra indicador visual de conexión exitosa
+         * • Lista cuántos modelos están disponibles
+         * 
+         * ═══════════════════════════════════════════════════════════════════════════════
+         */
+        async function testConnection() {
+            await loadModelsFromApi(true);
+        }
+        /**
+         * ═══════════════════════════════════════════════════════════════════════════════
+         * FIN FUNCIÓN testConnection()
+         * ═══════════════════════════════════════════════════════════════════════════════
+         */
+    </script>
+</body>
+</html>
