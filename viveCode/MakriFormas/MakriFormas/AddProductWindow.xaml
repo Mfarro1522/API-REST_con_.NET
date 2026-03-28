@@ -1,0 +1,75 @@
+<Window x:Class="MakriFormas.AddProductWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Añadir Producto / Material" Height="560" Width="520"
+        MinHeight="520" MinWidth="500"
+        WindowStartupLocation="CenterOwner">
+    <Grid Margin="22">
+        <Border Style="{StaticResource CardBorderStyle}" Padding="0" CornerRadius="16">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <Border Grid.Row="0" Background="{StaticResource TropicalPinkTintBrush}" BorderBrush="{StaticResource BorderSoftBrush}" BorderThickness="0,0,0,1" Padding="18,14">
+                    <StackPanel>
+                        <TextBlock Text="Nuevo Producto" FontSize="24" FontWeight="Black" />
+                        <TextBlock Text="Completa los datos para registrar el item en inventario." Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0" />
+                    </StackPanel>
+                </Border>
+
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="18,14,18,10">
+                        <TextBlock Text="SKU" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" />
+                        <TextBox x:Name="txtSku" Margin="0,4,0,12" />
+
+                        <TextBlock Text="NOMBRE / ESPECIFICACIÓN" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" />
+                        <TextBox x:Name="txtName" Margin="0,4,0,12" />
+
+                        <TextBlock Text="CATEGORÍA" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" />
+                        <ComboBox x:Name="cboCategory" Margin="0,4,0,12" SelectedIndex="0">
+                            <ComboBoxItem Content="Materiales" />
+                            <ComboBoxItem Content="Diseño" />
+                            <ComboBoxItem Content="Instalación" />
+                            <ComboBoxItem Content="Estructuras" />
+                        </ComboBox>
+
+                        <TextBlock Text="PRECIO UNITARIO" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" />
+                        <TextBox x:Name="txtPrice" Margin="0,4,0,12" />
+
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Margin="0,0,8,0">
+                                <TextBlock Text="STOCK" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" />
+                                <TextBox x:Name="txtStock" Margin="0,4,0,0" Text="0" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                                <TextBlock Text="UNIDAD" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" />
+                                <ComboBox x:Name="cboUnit" Margin="0,4,0,0" SelectedIndex="0">
+                                    <ComboBoxItem Content="und" />
+                                    <ComboBoxItem Content="m" />
+                                    <ComboBoxItem Content="m2" />
+                                    <ComboBoxItem Content="kg" />
+                                </ComboBox>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <Border Grid.Row="2" BorderBrush="{StaticResource BorderSoftBrush}" BorderThickness="0,1,0,0" Padding="18,12">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Cancelar" Click="Cancel_Click" Margin="0,0,10,0" Style="{StaticResource GhostButton}" />
+                        <Button Content="Guardar Producto" Click="Save_Click" Style="{StaticResource PrimaryButton}" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

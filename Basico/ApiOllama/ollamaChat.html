@@ -420,19 +420,19 @@
         <div class="sidebar">
             <div class="sidebar-header">⚙️ Configuración</div>
 
-            <!-- ═══════════════════════════════════════════════════════════════════════
-                 SECCIÓN DE CONFIGURACIÓN DE LA API - OLLAMA
+              <!-- ═══════════════════════════════════════════════════════════════════════
+                  SECCIÓN DE CONFIGURACIÓN DE LA API - .NET
                  ═══════════════════════════════════════════════════════════════════════
                  
-                 Esta sección configura la conexión con el servidor Ollama local.
-                 Ollama expone una API REST en el puerto 11434 por defecto.
+                  Esta sección configura la conexión con la API .NET.
+                  La API .NET actúa como backend y se encarga de hablar con Ollama.
                  
-                 ENDPOINTS DE OLLAMA UTILIZADOS:
+                  ENDPOINTS .NET UTILIZADOS:
                  ───────────────────────────────────────────────────────────────────────
-                 1. GET  /api/tags      → Lista todos los modelos disponibles
-                 2. POST /api/generate  → Genera una respuesta del modelo
+                  1. GET  /api/chat/modelos  → Lista modelos disponibles
+                  2. POST /api/chat          → Genera respuesta
                  
-                 ESTRUCTURA DE LA PETICIÓN POST /api/generate:
+                 ESTRUCTURA DE LA PETICIÓN POST /api/chat:
                  ───────────────────────────────────────────────────────────────────────
                  {
                      "model": "nombre-del-modelo",  // ej: "llama2", "mistral"
@@ -461,19 +461,18 @@
 
             <!-- CONFIGURACIÓN DEL SERVIDOR -->
             <div class="config-section">
-                <h3>🔌 Servidor Ollama</h3>
+                <h3>🔌 API .NET</h3>
                 <div class="form-group">
                     <label for="apiUrl">URL del Servidor</label>
                     <!-- 
-                         URL base del servidor Ollama.
-                         Por defecto: http://localhost:11434
+                         URL base de la API .NET (sin barra final).
+                         Ejemplo: https://localhost:7267/api/chat
                          
-                         Si Ollama está en otra máquina:
-                         • Misma red: http://192.168.1.100:11434
-                         • Docker: http://host.docker.internal:11434
-                         • Remoto: https://tu-servidor-ollama.com
+                         Si tu API .NET está en otra máquina:
+                         • Misma red: http://192.168.1.100:5000/api/chat
+                         • Remoto: https://tu-api.com/api/chat
                     -->
-                    <input type="text" id="apiUrl" value="http://localhost:11434" placeholder="http://localhost:11434">
+                    <input type="text" id="apiUrl" value="https://localhost:7044/api/chat" placeholder="https://localhost:7044/api/chat">
                 </div>
             </div>
 
@@ -516,7 +515,7 @@
             </div>
 
             <!-- BOTÓN DE PRUEBA DE CONEXIÓN -->
-            <!-- Llama a testConnection() que hace GET a /api/tags -->
+            <!-- Llama a testConnection() que hace GET a /api/chat/modelos -->
             <button class="test-btn" onclick="testConnection()">🧪 Probar Conexión</button>
 
             <!-- INDICADOR DE ESTADO DE CONEXIÓN -->
@@ -565,25 +564,21 @@
          * OLLAMA CHAT - CLIENTE JAVASCRIPT
          * ═════════════════════════════════════════════════════════════════════════════════
          * 
-         * Este script maneja la comunicación con la API REST de Ollama.
-         * 
-         * REFERENCIA DE API DE OLLAMA:
-         * ─────────────────────────────────────────────────────────────────────────────────
-         * Documentación oficial: https://github.com/ollama/ollama/blob/main/docs/api.md
+         * Este script maneja la comunicación con la API REST de .NET.
          * 
          * ENDPOINTS UTILIZADOS:
-         * • GET  /api/tags      - Lista modelos instalados
-         * • POST /api/generate  - Genera texto con un modelo
+         * • GET  /api/chat/modelos - Lista modelos
+         * • POST /api/chat         - Genera texto
          * 
          * CONFIGURACIÓN POR DEFECTO:
-         * • URL: http://localhost:11434
+         * • URL: https://localhost:7044/api/chat
          * • Modelo: llama2
          * • Temperatura: 0.7
          * 
          * REQUISITOS:
-         * • Ollama instalado y ejecutándose
-         * • Modelos descargados (ollama pull <modelo>)
-         * • CORS configurado si se accede desde otro dominio
+         * • API .NET ejecutándose
+         * • Backend .NET conectado a Ollama
+         * • CORS configurado en .NET si se accede desde otro dominio
          * 
          * ═════════════════════════════════════════════════════════════════════════════════
          */
@@ -638,17 +633,17 @@
 
         async function loadModelsFromApi(showFeedback = false) {
             try {
-                const apiUrl = apiUrlInput.value;
-                const response = await fetch(`${apiUrl}/api/tags`);
+                const apiUrl = apiUrlInput.value.trim().replace(/\/$/, '');
+                const response = await fetch(`${apiUrl}/modelos`);
 
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
 
                 const data = await response.json();
-                const models = (data.models || [])
-                    .map(m => m?.name)
-                    .filter(Boolean);
+                const models = Array.isArray(data)
+                    ? data.filter(Boolean)
+                    : [];
 
                 populateModelSelectors(models);
 
@@ -657,7 +652,7 @@
                     if (showFeedback) {
                         alert(
                             `✅ ¡Conexión exitosa!\n\n` +
-                            `Servidor: ${apiUrl}\n` +
+                            `API .NET: ${apiUrl}\n` +
                             `Modelos disponibles: ${models.length}\n\n` +
                             `Modelos instalados:\n• ${models.join('\n• ')}`
                         );
@@ -671,17 +666,17 @@
 
                 return models;
             } catch (error) {
-                console.error("[API Ollama] No se pudieron cargar modelos:", error);
+                console.error("[API .NET] No se pudieron cargar modelos:", error);
                 clearModelSelectors();
                 connectionStatus.style.display = 'none';
                 if (showFeedback) {
                     alert(
                         `❌ Error de Conexión\n\n` +
-                        `No se pudo conectar a Ollama en:\n${apiUrlInput.value}\n\n` +
+                        `No se pudo conectar a la API .NET en:\n${apiUrlInput.value}\n\n` +
                         `🔧 Verifica:\n` +
-                        `• Ollama está ejecutándose (ollama serve)\n` +
+                        `• La API .NET está ejecutándose\n` +
                         `• La URL es correcta\n` +
-                        `• No hay firewall bloqueando el puerto 11434`
+                        `• No hay firewall o certificado HTTPS bloqueando la conexión`
                     );
                 }
                 return [];
@@ -724,7 +719,7 @@
          * FUNCIÓN PRINCIPAL: sendMessage()
          * ═══════════════════════════════════════════════════════════════════════════════
          * 
-         * Envía el mensaje del usuario a la API de Ollama y muestra la respuesta.
+         * Envía el mensaje del usuario a la API .NET y muestra la respuesta.
          * 
          * FLUJO DE EJECUCIÓN:
          * ───────────────────────────────────────────────────────────────────────────────
@@ -732,29 +727,24 @@
          * 2. Muestra el mensaje del usuario en el chat
          * 3. Muestra indicador de "escribiendo..."
          * 4. Construye el cuerpo de la petición (requestBody)
-         * 5. Realiza POST a /api/generate
+         * 5. Realiza POST a /api/chat
          * 6. Procesa la respuesta JSON
          * 7. Muestra la respuesta del asistente
          * 8. Maneja errores de conexión
          * 
-         * ENDPOINT: POST {apiUrl}/api/generate
+         * ENDPOINT: POST {apiUrl}
          * 
          * REQUEST BODY:
          * ───────────────────────────────────────────────────────────────────────────────
          * {
-         *     model: string       // Nombre del modelo seleccionado
-         *     prompt: string      // Mensaje del usuario
-         *     temperature: number // 0-2, controla creatividad
-         *     stream: boolean     // false = respuesta completa de una vez
+         *     modelo: string   // Nombre del modelo seleccionado
+         *     mensaje: string  // Mensaje del usuario
          * }
          * 
          * RESPONSE:
          * ───────────────────────────────────────────────────────────────────────────────
          * {
-         *     model: string,
-         *     created_at: string,
-         *     response: string,   // Texto generado por el modelo
-         *     done: boolean
+         *     respuesta: string // Texto generado por el modelo
          * }
          * 
          * MANEJO DE ERRORES:
@@ -792,39 +782,36 @@
 
             try {
                 // ═══════════════════════════════════════════════════════════════════
-                // CONFIGURACIÓN DE LA PETICIÓN A OLLAMA
+                // CONFIGURACIÓN DE LA PETICIÓN A LA API .NET
                 // ═══════════════════════════════════════════════════════════════════
                 
                 // Obtener valores de la configuración del usuario
-                const apiUrl = apiUrlInput.value;           // ej: "http://localhost:11434"
+                const apiUrl = apiUrlInput.value.trim().replace(/\/$/, ''); // ej: "https://localhost:7044/api/chat"
                 const model = modelSelect.value;            // ej: "llama2", "mistral"
-                const temperature = parseFloat(temperatureInput.value); // ej: 0.7
 
-                // Construir el cuerpo de la petición según documentación de Ollama
+                // Construir el cuerpo de la petición según el contrato de la API .NET
                 const requestBody = {
-                    model: model,           // Modelo a utilizar (debe estar descargado)
-                    prompt: message,        // Prompt/mensaje del usuario
-                    temperature: temperature, // Control de creatividad (0-2)
-                    stream: false           // false = esperar respuesta completa
+                    modelo: model,
+                    mensaje: message
                 };
 
                 // Log para debugging
-                console.log("[API Ollama] Enviando petición:", {
-                    endpoint: `${apiUrl}/api/generate`,
+                console.log("[API .NET] Enviando petición:", {
+                    endpoint: apiUrl,
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: requestBody
                 });
 
                 // ═══════════════════════════════════════════════════════════════════
-                // LLAMADA FETCH A LA API DE OLLAMA
+                // LLAMADA FETCH A LA API .NET
                 // ═══════════════════════════════════════════════════════════════════
-                const response = await fetch(`${apiUrl}/api/generate`, {
+                const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',  // Ollama requiere JSON
+                        'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(requestBody)  // Serializar objeto a JSON
+                    body: JSON.stringify(requestBody)
                 });
 
                 // Verificar si la respuesta HTTP fue exitosa (2xx)
@@ -835,14 +822,11 @@
                 // Parsear la respuesta JSON
                 const data = await response.json();
                 
-                // Extraer el texto generado por el modelo
-                // data.response contiene la respuesta del asistente
-                const assistantMessage = data.response || 'No response received';
+                // Extraer el texto generado desde la respuesta de la API .NET
+                const assistantMessage = data.respuesta || 'No se recibió respuesta';
 
-                console.log("[API Ollama] Respuesta recibida:", {
-                    model: data.model,
-                    response: assistantMessage,
-                    done: data.done
+                console.log("[API .NET] Respuesta recibida:", {
+                    respuesta: assistantMessage
                 });
 
                 // ─── REMOVER INDICADOR DE ESCRITURA ───
@@ -855,22 +839,21 @@
                 // ═══════════════════════════════════════════════════════════════════
                 // MANEJO DE ERRORES
                 // ═══════════════════════════════════════════════════════════════════
-                console.error("[API Ollama] Error en la petición:", error);
+                console.error("[API .NET] Error en la petición:", error);
                 
                 removeTypingIndicator(typingId);
                 
                 // Mensaje de error detallado para el usuario
                 addMessage(
                     `❌ Error de Conexión\n\n` +
-                    `No se pudo conectar a Ollama.\n\n` +
+                    `No se pudo conectar a la API .NET.\n\n` +
                     `🔧 Solución:\n` +
-                    `1. Verifica que Ollama esté ejecutándose:\n` +
-                    `   ollama serve\n\n` +
-                    `2. Comprueba la URL del servidor:\n` +
+                    `1. Verifica que la API .NET esté ejecutándose.\n\n` +
+                    `2. Comprueba la URL de la API:\n` +
                     `   ${apiUrlInput.value}\n\n` +
-                    `3. Asegúrate de tener el modelo descargado:\n` +
+                    `3. Asegúrate de tener el modelo descargado en Ollama:\n` +
                     `   ollama pull ${modelSelect.value}\n\n` +
-                    `4. Si usas otro dominio, verifica CORS`,
+                    `4. Revisa CORS y certificado HTTPS de tu API`,
                     'assistant'
                 );
             } finally {
@@ -985,9 +968,9 @@
          * 
          * Verifica la conectividad con el servidor Ollama y lista los modelos disponibles.
          * 
-         * ENDPOINT: GET {apiUrl}/api/tags
+         * ENDPOINT: GET {apiUrl}/modelos
          * 
-         * DESCRIPCIÓN DEL ENDPOINT /api/tags:
+         * DESCRIPCIÓN DEL ENDPOINT /modelos:
          * ───────────────────────────────────────────────────────────────────────────────
          * Este endpoint de Ollama devuelve una lista de todos los modelos que están
          * instalados localmente en el servidor.
