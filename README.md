@@ -8,11 +8,12 @@ Este repositorio contiene una colección de proyectos de aprendizaje y práctica
 API-REST_con_.NET/
 ├── Basico/                    # Proyectos básicos de API REST
 │   ├── Api_basico_1/         # API básica con controladores y CORS
-│   ├── ApiOllama/            # Integración con Ollama para IA local
 │   ├── MinimalApi_Dados/     # Minimal API para simular lanzamiento de dados
 │   └── PrimerApi/            # Primera API con Minimal API
-├── viveCode/                  # Proyecto de aplicación de escritorio
-│   └── MakriFormas/          # Sistema de gestión de inventario y proformas
+├── Proyectos/                # Proyectos más avanzados
+│   ├── ApiOllama/            # Integración con Ollama para IA local
+│   └── viveCode/             # Proyecto de aplicación de escritorio
+│       └── MakriFormas/      # Sistema de gestión de inventario y proformas
 ├── .github/                  # Configuración de GitHub Actions
 └── README.md                 # Este archivo
 ```
@@ -34,7 +35,7 @@ API que integra Ollama para interactuar con modelos de IA local:
 
 **Ejecutar:**
 ```bash
-cd Basico/ApiOllama/ApiOllama
+cd Proyectos/ApiOllama/ApiOllama
 dotnet run
 ```
 
@@ -49,7 +50,7 @@ Sistema de gestión de inventario y proformas desarrollado en WPF:
 **Tecnologías:** .NET Framework/WPF, SQLite, iTextSharp (PDF)
 
 **Ejecutar:**
-1. Abrir `viveCode/MakriFormas/MakriFormas.slnx` en Visual Studio
+1. Abrir `Proyectos/viveCode/MakriFormas/MakriFormas.slnx` en Visual Studio
 2. Compilar y ejecutar
 3. O usar el instalador en `installer/output/`
 
