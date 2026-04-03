@@ -1,0 +1,39 @@
+{
+  "unidades": [
+    {
+      "clave": "unidad",
+      "etiqueta": "Unidad",
+      "calculo": "cantidad",
+      "campos": [ "cantidad" ],
+      "ejemplo": "tazas, placas, gorras"
+    },
+    {
+      "clave": "m2",
+      "etiqueta": "m²",
+      "calculo": "ancho * alto * cantidad",
+      "campos": [ "ancho", "alto", "cantidad" ],
+      "ejemplo": "vinil, lona, banner"
+    },
+    {
+      "clave": "metro",
+      "etiqueta": "Metro",
+      "calculo": "longitud * cantidad",
+      "campos": [ "longitud", "cantidad" ],
+      "ejemplo": "cinta, perfil, filete"
+    },
+    {
+      "clave": "kg",
+      "etiqueta": "Kg",
+      "calculo": "cantidad",
+      "campos": [ "cantidad" ],
+      "ejemplo": "resina, tinta a granel"
+    },
+    {
+      "clave": "oz",
+      "etiqueta": "Oz",
+      "calculo": "cantidad",
+      "campos": [ "cantidad" ],
+      "ejemplo": "tinta sublimación"
+    }
+  ]
+}

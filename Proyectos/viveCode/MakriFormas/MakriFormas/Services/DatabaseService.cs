@@ -104,7 +104,7 @@ namespace MakriFormas.Services
             Initialize();
 
             var cleanItems = (draft.Items ?? new List<ProformaItem>())
-                .Where(i => i.Quantity > 0 && !string.IsNullOrWhiteSpace(i.Description))
+                .Where(i => i.Cantidad > 0 && !string.IsNullOrWhiteSpace(i.Description))
                 .ToList();
 
             if (cleanItems.Count == 0)
@@ -118,10 +118,11 @@ namespace MakriFormas.Services
             var snapshot = cleanItems.Select(i => new
             {
                 i.Description,
-                i.IsAreaBased,
-                i.Width,
-                i.Height,
-                i.Quantity,
+                i.Unidad,
+                i.Ancho,
+                i.Alto,
+                i.Longitud,
+                i.Cantidad,
                 i.UnitPrice,
                 Total = i.Total
             });
@@ -289,12 +290,36 @@ namespace MakriFormas.Services
                     var item = new ProformaItem
                     {
                         Description = element.TryGetProperty("Description", out var desc) ? desc.GetString() ?? string.Empty : string.Empty,
-                        IsAreaBased = element.TryGetProperty("IsAreaBased", out var area) && area.GetBoolean(),
-                        Width = element.TryGetProperty("Width", out var w) ? w.GetDouble() : 1,
-                        Height = element.TryGetProperty("Height", out var h) ? h.GetDouble() : 1,
-                        Quantity = element.TryGetProperty("Quantity", out var q) ? q.GetInt32() : 0,
                         UnitPrice = element.TryGetProperty("UnitPrice", out var p) ? p.GetDouble() : 0
                     };
+
+                    // ── Nuevo formato con Unidad ──────────────────────────────────
+                    if (element.TryGetProperty("Unidad", out var unidadProp))
+                    {
+                        item.Unidad   = unidadProp.GetString() ?? "unidad";
+                        item.Ancho    = element.TryGetProperty("Ancho",    out var aw) ? aw.GetDouble() : 1;
+                        item.Alto     = element.TryGetProperty("Alto",     out var ah) ? ah.GetDouble() : 1;
+                        item.Longitud = element.TryGetProperty("Longitud", out var al) ? al.GetDouble() : 1;
+                        item.Cantidad = element.TryGetProperty("Cantidad", out var ac) ? ac.GetDouble() : 1;
+                    }
+                    else
+                    {
+                        // ── Migración del formato viejo (IsAreaBased + Quantity) ──
+                        var isAreaBased = element.TryGetProperty("IsAreaBased", out var area) && area.GetBoolean();
+                        item.Unidad   = isAreaBased ? "m2" : "unidad";
+                        item.Ancho    = element.TryGetProperty("Width",  out var w) ? w.GetDouble() : 1;
+                        item.Alto     = element.TryGetProperty("Height", out var h) ? h.GetDouble() : 1;
+                        item.Longitud = 1;
+
+                        // Cantidad puede estar serializada como int o double
+                        if (element.TryGetProperty("Cantidad", out var cDbl))
+                            item.Cantidad = cDbl.GetDouble();
+                        else if (element.TryGetProperty("Quantity", out var qInt))
+                            item.Cantidad = qInt.TryGetDouble(out var qd) ? qd : qInt.GetInt32();
+                        else
+                            item.Cantidad = 1;
+                    }
+
                     items.Add(item);
                 }
             }
@@ -431,6 +456,17 @@ namespace MakriFormas.Services
             connection.Open();
             using var command = connection.CreateCommand();
             command.CommandText = "DELETE FROM Proformas WHERE Id = $id";
+            command.Parameters.AddWithValue("$id", id);
+            command.ExecuteNonQuery();
+        }
+
+        public static void UpdateProductPrice(int id, double newPrice)
+        {
+            using var connection = CreateConnection(DatabasePath);
+            connection.Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = "UPDATE Products SET UnitPrice = $price WHERE Id = $id";
+            command.Parameters.AddWithValue("$price", newPrice);
             command.Parameters.AddWithValue("$id", id);
             command.ExecuteNonQuery();
         }

@@ -204,16 +204,18 @@
                                         <Grid Margin="0,0,0,6">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="3*" />
+                                                <ColumnDefinition Width="90" />
                                                 <ColumnDefinition Width="2*" />
-                                                <ColumnDefinition Width="1*" />
+                                                <ColumnDefinition Width="60" />
                                                 <ColumnDefinition Width="2*" />
                                                 <ColumnDefinition Width="2*" />
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="Descripción" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" />
-                                            <TextBlock Grid.Column="1" Text="Medidas (An x Al)" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center" />
-                                            <TextBlock Grid.Column="2" Text="Cant" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center" />
-                                            <TextBlock Grid.Column="3" Text="P. Unitario" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Right" />
-                                            <TextBlock Grid.Column="4" Text="Total" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Right" />
+                                            <TextBlock Grid.Column="1" Text="Unidad" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center" />
+                                            <TextBlock Grid.Column="2" Text="Dimensiones" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center" />
+                                            <TextBlock Grid.Column="3" Text="Cant" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center" />
+                                            <TextBlock Grid.Column="4" Text="P. Unitario" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Right" />
+                                            <TextBlock Grid.Column="5" Text="Total" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Right" />
                                         </Grid>
 
                                         <ItemsControl x:Name="icItems">
@@ -223,23 +225,59 @@
                                                         <Grid>
                                                             <Grid.ColumnDefinitions>
                                                                 <ColumnDefinition Width="3*" />
+                                                                <ColumnDefinition Width="90" />
                                                                 <ColumnDefinition Width="2*" />
-                                                                <ColumnDefinition Width="1*" />
+                                                                <ColumnDefinition Width="60" />
                                                                 <ColumnDefinition Width="2*" />
                                                                 <ColumnDefinition Width="2*" />
                                                             </Grid.ColumnDefinitions>
-                                                            <StackPanel>
-                                                                <TextBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}" FontWeight="Bold" BorderThickness="0" Background="Transparent" />
-                                                                <CheckBox IsChecked="{Binding IsAreaBased}" Content="Por metro cuadrado" FontSize="10" Foreground="{StaticResource TextMutedBrush}" />
-                                                            </StackPanel>
-                                                            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                                <TextBox Width="40" Text="{Binding Width, UpdateSourceTrigger=PropertyChanged}" TextAlignment="Center" BorderThickness="1" BorderBrush="#DDD" />
-                                                                <TextBlock Text=" x " VerticalAlignment="Center" />
-                                                                <TextBox Width="40" Text="{Binding Height, UpdateSourceTrigger=PropertyChanged}" TextAlignment="Center" BorderThickness="1" BorderBrush="#DDD" />
-                                                            </StackPanel>
-                                                            <TextBox Grid.Column="2" VerticalAlignment="Center" Width="40" HorizontalAlignment="Center" TextAlignment="Center" Text="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}" BorderThickness="1" BorderBrush="#DDD" />
-                                                            <TextBox Grid.Column="3" VerticalAlignment="Center" Width="60" Text="{Binding UnitPrice, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Right" TextAlignment="Right" BorderThickness="1" BorderBrush="#DDD" />
-                                                            <TextBlock Grid.Column="4" Text="{Binding Total, StringFormat=S/ {0:N2}}" HorizontalAlignment="Right" VerticalAlignment="Center" FontWeight="Bold" />
+
+                                                            <!-- Descripción -->
+                                                            <TextBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}" FontWeight="Bold" BorderThickness="0" Background="Transparent" VerticalAlignment="Center" />
+
+                                                            <!-- Unidad -->
+                                                            <ComboBox Grid.Column="1"
+                                                                      SelectedValue="{Binding Unidad, UpdateSourceTrigger=PropertyChanged}"
+                                                                      SelectedValuePath="Tag"
+                                                                      VerticalAlignment="Center"
+                                                                      FontSize="11"
+                                                                      SelectionChanged="ItemUnidad_SelectionChanged">
+                                                                <ComboBoxItem Tag="unidad" Content="und" />
+                                                                <ComboBoxItem Tag="m2" Content="m²" />
+                                                                <ComboBoxItem Tag="metro" Content="metro" />
+                                                                <ComboBoxItem Tag="kg" Content="kg" />
+                                                                <ComboBoxItem Tag="oz" Content="oz" />
+                                                            </ComboBox>
+
+                                                            <!-- Dimensiones dinámicas (m2: Ancho × Alto | metro: Longitud) -->
+                                                            <Grid Grid.Column="2" VerticalAlignment="Center">
+                                                                <!-- m2: campos Ancho × Alto -->
+                                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
+                                                                            Visibility="{Binding IsAreaBased, Converter={StaticResource BoolToVisible}}">
+                                                                    <TextBox Width="38" Text="{Binding Ancho, UpdateSourceTrigger=PropertyChanged}" TextAlignment="Center" BorderThickness="1" BorderBrush="#DDD" />
+                                                                    <TextBlock Text=" × " VerticalAlignment="Center" FontSize="11" />
+                                                                    <TextBox Width="38" Text="{Binding Alto, UpdateSourceTrigger=PropertyChanged}" TextAlignment="Center" BorderThickness="1" BorderBrush="#DDD" />
+                                                                </StackPanel>
+                                                                <!-- metro: campo Longitud -->
+                                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
+                                                                            Visibility="{Binding IsMetro, Converter={StaticResource BoolToVisible}}">
+                                                                    <TextBox Width="60" Text="{Binding Longitud, UpdateSourceTrigger=PropertyChanged}" TextAlignment="Center" BorderThickness="1" BorderBrush="#DDD" />
+                                                                    <TextBlock Text=" m" VerticalAlignment="Center" FontSize="11" />
+                                                                </StackPanel>
+                                                                <!-- otras: guión -->
+                                                                <TextBlock Text="—" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#CCC"
+                                                                           Visibility="{Binding IsSimpleUnit, Converter={StaticResource BoolToVisible}}" />
+                                                            </Grid>
+
+                                                            <!-- Cantidad -->
+                                                            <TextBox Grid.Column="3" VerticalAlignment="Center" Width="46" HorizontalAlignment="Center" TextAlignment="Center"
+                                                                     Text="{Binding Cantidad, UpdateSourceTrigger=PropertyChanged}" BorderThickness="1" BorderBrush="#DDD" />
+
+                                                            <!-- Precio unitario -->
+                                                            <TextBox Grid.Column="4" VerticalAlignment="Center" Width="70" Text="{Binding UnitPrice, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Right" TextAlignment="Right" BorderThickness="1" BorderBrush="#DDD" />
+
+                                                            <!-- Total -->
+                                                            <TextBlock Grid.Column="5" Text="{Binding Total, StringFormat=S/ {0:N2}}" HorizontalAlignment="Right" VerticalAlignment="Center" FontWeight="Bold" />
                                                         </Grid>
                                                     </Border>
                                                 </DataTemplate>

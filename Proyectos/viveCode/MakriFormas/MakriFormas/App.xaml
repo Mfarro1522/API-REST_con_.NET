@@ -4,6 +4,8 @@
              xmlns:local="clr-namespace:MakriFormas"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisible" />
+
         <Color x:Key="ColorBrand">#069494</Color>
         <Color x:Key="ColorBrandDark">#FF8243</Color>
         <Color x:Key="ColorBrandSoft">#FCE883</Color>

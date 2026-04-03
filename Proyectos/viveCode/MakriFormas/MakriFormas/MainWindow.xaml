@@ -88,6 +88,8 @@
                         </StackPanel>
 
                         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Content="🤖  Asistente" Margin="0,0,8,0" Style="{StaticResource GhostButton}" Click="OpenAgent_Click" />
+                            <Button Content="📄  Importar Proforma" Margin="0,0,8,0" Style="{StaticResource GhostButton}" Click="OpenImportPdf_Click" />
                             <Button Content="📜  Historial Proformas" Margin="0,0,8,0" Style="{StaticResource GhostButton}" Click="OpenProformaHistory_Click" />
                             <Button Content="📥  Importar BD" Margin="0,0,8,0" Style="{StaticResource GhostButton}" Click="ImportDatabase_Click" />
                             <Button Content="📤  Exportar BD" Style="{StaticResource GhostButton}" Click="ExportDatabase_Click" />

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Windows;
 using MakriFormas.Services;
@@ -73,6 +73,29 @@ namespace MakriFormas
         private void ExportDatabase_Click(object sender, RoutedEventArgs e)
         {
             DatabaseTransferService.ExportDatabase(this);
+        }
+
+        private void OpenAgent_Click(object sender, RoutedEventArgs e)
+        {
+            var chatWindow = new AgentChatWindow { Owner = this };
+            chatWindow.DbChanged += (_, _) => RefreshDashboard();
+            chatWindow.Show();
+        }
+
+        private void OpenImportPdf_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "Proformas compatibles (*.pdf;*.png;*.jpg;*.jpeg;*.bmp;*.tif;*.tiff)|*.pdf;*.png;*.jpg;*.jpeg;*.bmp;*.tif;*.tiff|PDF (*.pdf)|*.pdf|Imágenes (*.png;*.jpg;*.jpeg;*.bmp;*.tif;*.tiff)|*.png;*.jpg;*.jpeg;*.bmp;*.tif;*.tiff",
+                Title  = "Seleccionar proforma (PDF o imagen)"
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                var importWindow = new ImportReviewWindow(dialog.FileName) { Owner = this };
+                importWindow.ImportConfirmed += (_, _) => RefreshDashboard();
+                importWindow.ShowDialog();
+            }
         }
     }
 }

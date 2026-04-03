@@ -16,7 +16,7 @@ namespace MakriFormas.Services
             QuestPDF.Settings.License = LicenseType.Community;
 
             var templateBytes = File.ReadAllBytes(ResolveTemplatePath());
-            var printableItems = items?.Where(x => x.Quantity > 0).ToList() ?? new List<ProformaItem>();
+            var printableItems = items?.Where(x => x.Cantidad > 0).ToList() ?? new List<ProformaItem>();
             var documentDate = DateTime.Now;
             var deliveryDate = date?.ToString("dd/MM/yyyy") ?? "Por coordinar";
             var safeClientName = SanitizeClientName(clientName);
@@ -101,7 +101,7 @@ namespace MakriFormas.Services
                                             var item = i < printableItems.Count ? printableItems[i] : null;
                                             qtyCol.Item().Height(Layout.RowHeight)
                                                 .AlignCenter().AlignMiddle()
-                                                .Text(item?.Quantity.ToString() ?? string.Empty)
+                                                .Text(item != null ? FormatQuantity(item) : string.Empty)
                                                 .FontSize(8);
                                         }
                                     });
@@ -203,12 +203,24 @@ namespace MakriFormas.Services
             }
 
             var description = item.Description ?? string.Empty;
-            if (item.IsAreaBased)
+            return item.Unidad switch
             {
-                description += $" {item.Width:N2}x{item.Height:N2}m";
-            }
+                "m2"    => $"{description} {item.Ancho:N2}\u00d7{item.Alto:N2}m",
+                "metro" => $"{description} ({item.Longitud:N2}m)",
+                _       => description
+            };
+        }
 
-            return description;
+        private static string FormatQuantity(ProformaItem item)
+        {
+            return item.Unidad switch
+            {
+                "m2"    => $"{item.Cantidad:N2} m\u00b2",
+                "metro" => $"{item.Cantidad:N2} m",
+                "kg"    => $"{item.Cantidad:N2} kg",
+                "oz"    => $"{item.Cantidad:N2} oz",
+                _       => $"{item.Cantidad:N0} und"
+            };
         }
 
         private static string SanitizeClientName(string? clientName)

@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using System.Windows;
 using MakriFormas.Services;
 
@@ -16,6 +17,9 @@ namespace MakriFormas
         {
             base.OnStartup(e);
             DatabaseService.Initialize();
+
+            // Iniciar Ollama en segundo plano — no bloquea la UI
+            _ = Task.Run(() => OllamaLauncher.EnsureRunningAsync());
         }
 
         public void ShowOrActivateInventory(Window? owner = null)

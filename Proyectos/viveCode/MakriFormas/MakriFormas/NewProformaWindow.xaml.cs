@@ -50,6 +50,44 @@ namespace MakriFormas
             hasUnsavedChanges = false;
         }
 
+        /// <summary>
+        /// Pre-llena la ventana con datos del agente IA (cliente + ítems).
+        /// Llamar justo después de Show().
+        /// </summary>
+        public void PreFill(ProformaPreFillData data)
+        {
+            suppressChangeTracking = true;
+
+            // Cliente
+            if (!string.IsNullOrWhiteSpace(data.ClientName))
+                txtCliente.Text = data.ClientName;
+            if (!string.IsNullOrWhiteSpace(data.Ruc))
+                txtRuc.Text = data.Ruc;
+
+            // Limpiar el ítem vacío por defecto
+            if (data.Items.Count > 0)
+                Items.Clear();
+
+            // Agregar los ítems del agente
+            foreach (var req in data.Items)
+            {
+                Items.Add(new ProformaItem
+                {
+                    Description = req.Description,
+                    Unidad      = req.Unit,
+                    Ancho       = req.Ancho > 0 ? req.Ancho : 1,
+                    Alto        = req.Alto  > 0 ? req.Alto  : 1,
+                    Longitud    = req.Longitud > 0 ? req.Longitud : 1,
+                    Cantidad    = req.Cantidad,
+                    UnitPrice   = req.Precio
+                });
+            }
+
+            suppressChangeTracking = false;
+            hasUnsavedChanges = false;
+            UpdateTotal();
+        }
+
         private void LoadCatalogProducts()
         {
             catalogProducts = DatabaseService.GetProducts();
@@ -106,13 +144,15 @@ namespace MakriFormas
 
         private void AddNewItem()
         {
-            Items.Add(new ProformaItem 
-            { 
-                Description = "Nuevo material...", 
-                Quantity = 1, 
+            Items.Add(new ProformaItem
+            {
+                Description = "Nuevo material...",
+                Unidad = "unidad",
+                Cantidad = 1,
                 UnitPrice = 0.00,
-                Width = 1,
-                Height = 1
+                Ancho = 1,
+                Alto = 1,
+                Longitud = 1
             });
         }
 
@@ -157,10 +197,12 @@ namespace MakriFormas
             Items.Add(new ProformaItem
             {
                 Description = product.Name,
-                Quantity = 1,
+                Unidad = product.Unit,
+                Cantidad = 1,
                 UnitPrice = product.UnitPrice,
-                Width = 1,
-                Height = 1
+                Ancho = 1,
+                Alto = 1,
+                Longitud = 1
             });
 
             lbProductMatches.SelectedItem = null;
@@ -356,14 +398,15 @@ namespace MakriFormas
             }
 
             var validItems = Items
-                .Where(i => i.Quantity > 0 && !string.IsNullOrWhiteSpace(i.Description))
+                .Where(i => i.Cantidad > 0 && !string.IsNullOrWhiteSpace(i.Description))
                 .Select(i => new ProformaItem
                 {
                     Description = i.Description,
-                    IsAreaBased = i.IsAreaBased,
-                    Width = i.Width,
-                    Height = i.Height,
-                    Quantity = i.Quantity,
+                    Unidad = i.Unidad,
+                    Ancho = i.Ancho,
+                    Alto = i.Alto,
+                    Longitud = i.Longitud,
+                    Cantidad = i.Cantidad,
                     UnitPrice = i.UnitPrice
                 })
                 .ToList();
@@ -438,6 +481,12 @@ namespace MakriFormas
                 e.Handled = true;
                 textBox.Focus();
             }
+        }
+
+        private void ItemUnidad_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            // The ComboBox selectedvalue binding updates the model automatically.
+            // This handler exists so the event is wired (required by XAML).
         }
     }
 }
