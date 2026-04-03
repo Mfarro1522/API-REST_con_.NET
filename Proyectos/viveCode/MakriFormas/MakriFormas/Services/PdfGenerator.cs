@@ -206,7 +206,9 @@ namespace MakriFormas.Services
             return item.Unidad switch
             {
                 "m2"    => $"{description} {item.Ancho:N2}\u00d7{item.Alto:N2}m",
+                "cm2"   => $"{description} {item.Ancho:N2}\u00d7{item.Alto:N2}cm",
                 "metro" => $"{description} ({item.Longitud:N2}m)",
+                "cm"    => $"{description} ({item.Longitud:N2}cm)",
                 _       => description
             };
         }
@@ -215,11 +217,14 @@ namespace MakriFormas.Services
         {
             return item.Unidad switch
             {
-                "m2"    => $"{item.Cantidad:N2} m\u00b2",
-                "metro" => $"{item.Cantidad:N2} m",
-                "kg"    => $"{item.Cantidad:N2} kg",
-                "oz"    => $"{item.Cantidad:N2} oz",
-                _       => $"{item.Cantidad:N0} und"
+                "m2"       => $"{item.Cantidad:N2} m\u00b2",
+                "metro"    => $"{item.Cantidad:N2} m",
+                "kg"       => $"{item.Cantidad:N2} kg",
+                "millares" => $"{item.Cantidad:N0} millares",
+                "cientos"  => $"{item.Cantidad:N0} cientos",
+                "cm"       => $"{item.Cantidad:N2} cm",
+                "cm2"      => $"{item.Cantidad:N2} cm\u00b2",
+                _          => $"{item.Cantidad:N0} und"
             };
         }
 

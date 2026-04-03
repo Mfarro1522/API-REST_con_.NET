@@ -67,21 +67,21 @@ namespace MakriFormas.Models
             set { Cantidad = value; }
         }
 
-        /// <summary>Alias de compatibilidad (IsAreaBased = Unidad == "m2")</summary>
+        /// <summary>Alias de compatibilidad</summary>
         public bool IsAreaBased
         {
-            get => unidad == "m2";
+            get => unidad == "m2" || unidad == "cm2";
             set
             {
                 if (value)
                     Unidad = "m2";
-                else if (unidad == "m2")
+                else if (unidad == "m2" || unidad == "cm2")
                     Unidad = "unidad";
             }
         }
 
-        public bool IsMetro => unidad == "metro";
-        public bool IsSimpleUnit => unidad != "m2" && unidad != "metro";
+        public bool IsMetro => unidad == "metro" || unidad == "cm";
+        public bool IsSimpleUnit => !IsAreaBased && !IsMetro;
 
         // Mantener Width/Height como alias para retrocompatibilidad del JSON viejo
         public double Width
@@ -101,7 +101,9 @@ namespace MakriFormas.Models
         public double Total => Unidad switch
         {
             "m2"    => Ancho * Alto * Cantidad * UnitPrice,
+            "cm2"   => Ancho * Alto * Cantidad * UnitPrice,
             "metro" => Longitud * Cantidad * UnitPrice,
+            "cm"    => Longitud * Cantidad * UnitPrice,
             _       => Cantidad * UnitPrice
         };
 

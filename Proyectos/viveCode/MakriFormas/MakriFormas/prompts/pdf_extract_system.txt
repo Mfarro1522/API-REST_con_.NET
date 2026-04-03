@@ -10,7 +10,10 @@ Responde SIEMPRE con un array JSON válido (sin texto fuera del JSON):
 - "m2" → metros cuadrados (vinil, lona, banner, canvas)
 - "metro" → metros lineales (cinta, perfil, filete, tubos)
 - "kg" → kilogramos (tinta a granel, resina)
-- "oz" → onzas (tinta sublimación)
+- "millares" → miles de unidades (tarjetas, volantes)
+- "cientos" → cientos de unidades (hojas, folletos)
+- "cm" → centímetros lineales (listón, bordado)
+- "cm2" → centímetros cuadrados (etiquetas, stickers)
 - "unidad" → pieza individual (cualquier otro caso)
 
 == REGLAS ==

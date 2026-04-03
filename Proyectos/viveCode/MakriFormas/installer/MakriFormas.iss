@@ -5,7 +5,7 @@
 ; =====================================================================
 
 #define AppName      "MakriFormas"
-#define AppVersion   "1.0.0"
+#define AppVersion   "1.3.0"
 #define AppPublisher "Makri"
 #define AppExeName   "MakriFormas.exe"
 #define AppURL       "https://makri.com"

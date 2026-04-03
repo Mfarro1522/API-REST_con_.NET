@@ -54,9 +54,13 @@
                                 <TextBlock Text="UNIDAD" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" />
                                 <ComboBox x:Name="cboUnit" Margin="0,4,0,0" SelectedIndex="0">
                                     <ComboBoxItem Content="und" />
-                                    <ComboBoxItem Content="m" />
-                                    <ComboBoxItem Content="m2" />
                                     <ComboBoxItem Content="kg" />
+                                    <ComboBoxItem Content="millares" />
+                                    <ComboBoxItem Content="cientos" />
+                                    <ComboBoxItem Content="m2" />
+                                    <ComboBoxItem Content="metro" />
+                                    <ComboBoxItem Content="cm" />
+                                    <ComboBoxItem Content="cm2" />
                                 </ComboBox>
                             </StackPanel>
                         </Grid>

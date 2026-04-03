@@ -15,7 +15,7 @@ if (Test-Path $InstallerOutputDir) { Remove-Item -Recurse -Force $InstallerOutpu
 Write-Host "[2/4] Compilando y publicando MakriFormas (Win-x64, Self-Contained, Single File)..."
 # Usamos dotnet publish asegurándonos de que salga como un solo archivo con las dependencias net necesarias
 # y sin generar ni copiar la base de datos a publish.
-dotnet publish $ProjectFile -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o $PublishDir
+dotnet publish $ProjectFile -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o $PublishDir
 
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Falló la compilación."

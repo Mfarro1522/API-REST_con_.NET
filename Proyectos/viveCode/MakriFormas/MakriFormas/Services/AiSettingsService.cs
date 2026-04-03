@@ -109,7 +109,7 @@ namespace MakriFormas.Services
             }
             else
             {
-                prompt = prompt.Replace("{UNIDADES_PLACEHOLDER}", "unidad, m2, metro, kg, oz");
+                prompt = prompt.Replace("{UNIDADES_PLACEHOLDER}", "unidad, m2, metro, kg, millares, cientos, cm, cm2");
             }
 
             return prompt;
@@ -151,7 +151,7 @@ namespace MakriFormas.Services
             }
             catch
             {
-                return "unidad, m2, metro, kg, oz";
+                return "unidad, m2, metro, kg, millares, cientos, cm, cm2";
             }
         }
 

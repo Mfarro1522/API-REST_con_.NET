@@ -243,10 +243,13 @@
                                                                       FontSize="11"
                                                                       SelectionChanged="ItemUnidad_SelectionChanged">
                                                                 <ComboBoxItem Tag="unidad" Content="und" />
+                                                                <ComboBoxItem Tag="kg" Content="kg" />
+                                                                <ComboBoxItem Tag="millares" Content="millares" />
+                                                                <ComboBoxItem Tag="cientos" Content="cientos" />
                                                                 <ComboBoxItem Tag="m2" Content="m²" />
                                                                 <ComboBoxItem Tag="metro" Content="metro" />
-                                                                <ComboBoxItem Tag="kg" Content="kg" />
-                                                                <ComboBoxItem Tag="oz" Content="oz" />
+                                                                <ComboBoxItem Tag="cm" Content="cm" />
+                                                                <ComboBoxItem Tag="cm2" Content="cm²" />
                                                             </ComboBox>
 
                                                             <!-- Dimensiones dinámicas (m2: Ancho × Alto | metro: Longitud) -->

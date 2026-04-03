@@ -29,11 +29,32 @@
       "ejemplo": "resina, tinta a granel"
     },
     {
-      "clave": "oz",
-      "etiqueta": "Oz",
+      "clave": "millares",
+      "etiqueta": "Millares",
       "calculo": "cantidad",
       "campos": [ "cantidad" ],
-      "ejemplo": "tinta sublimación"
+      "ejemplo": "tarjetas, volantes"
+    },
+    {
+      "clave": "cientos",
+      "etiqueta": "Cientos",
+      "calculo": "cantidad",
+      "campos": [ "cantidad" ],
+      "ejemplo": "hojas, folletos"
+    },
+    {
+      "clave": "cm",
+      "etiqueta": "cm",
+      "calculo": "longitud * cantidad",
+      "campos": [ "longitud", "cantidad" ],
+      "ejemplo": "listón, bordado"
+    },
+    {
+      "clave": "cm2",
+      "etiqueta": "cm²",
+      "calculo": "ancho * alto * cantidad",
+      "campos": [ "ancho", "alto", "cantidad" ],
+      "ejemplo": "etiquetas pequeñas, stickers"
     }
   ]
 }
