@@ -1,12 +1,14 @@
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using Microsoft.Win32;
 using MakriFormas.Services;
 
 namespace MakriFormas
@@ -41,7 +43,8 @@ namespace MakriFormas
         public event EventHandler? DbChanged;
 
         private CancellationTokenSource? _cts;
-        private string _currentModel = OllamaService.ChatPrimaryModel;
+        private string? _attachedFilePath;
+        private const int MaxAttachmentContextChars = 20000;
 
         public AgentChatWindow()
         {
@@ -51,9 +54,10 @@ namespace MakriFormas
             // Mensaje de bienvenida
             AddAgentMessage("¡Hola! Soy el asistente de MakriFormas 🤖\n" +
                             "Puedo ayudarte a gestionar productos, crear proformas y más.\n" +
+                            "También puedes adjuntar una imagen o PDF para conversar sobre su contenido.\n" +
                             "¿En qué te ayudo hoy?");
 
-            _ = CheckOllamaStatusAsync();
+            _ = CheckAiStatusAsync();
         }
 
         // ── Envío de mensajes ─────────────────────────────────────────────────
@@ -81,13 +85,23 @@ namespace MakriFormas
         private async Task SendMessageAsync()
         {
             var text = txtInput.Text?.Trim();
-            if (string.IsNullOrWhiteSpace(text)) return;
+            if (string.IsNullOrWhiteSpace(text) && string.IsNullOrWhiteSpace(_attachedFilePath)) return;
+
+            var userDisplay = text ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(_attachedFilePath))
+            {
+                var fileName = Path.GetFileName(_attachedFilePath);
+                userDisplay = string.IsNullOrWhiteSpace(userDisplay)
+                    ? $"Adjunto: {fileName}"
+                    : $"{userDisplay}\n\nAdjunto: {fileName}";
+            }
 
             txtInput.Text = string.Empty;
             btnSend.IsEnabled = false;
+            btnAttach.IsEnabled = false;
 
             // Burbuja del usuario
-            Messages.Add(new ChatMessage { IsUser = true, Content = text });
+            Messages.Add(new ChatMessage { IsUser = true, Content = userDisplay });
             ScrollToBottom();
 
             // Placeholder del agente (se irá llenando con streaming)
@@ -102,10 +116,25 @@ namespace MakriFormas
 
             try
             {
+                var outboundMessage = text ?? string.Empty;
+                if (!string.IsNullOrWhiteSpace(_attachedFilePath))
+                {
+                    pnlThinking.Visibility = Visibility.Visible;
+                    txtThinking.Text = "⏳ Analizando archivo adjunto...";
+
+                    var attachmentContext = await BuildAttachmentContextAsync(_attachedFilePath, _cts.Token);
+                    outboundMessage = ComposeUserMessageWithAttachment(
+                        text ?? string.Empty,
+                        _attachedFilePath,
+                        attachmentContext);
+                }
+
+                txtThinking.Text = "⏳ Pensando...";
+
                 var accum = new System.Text.StringBuilder();
 
                 var response = await AgentDispatcher.ProcessStreamAsync(
-                    text,
+                    outboundMessage,
                     token =>
                     {
                         accum.Append(token);
@@ -117,13 +146,34 @@ namespace MakriFormas
                             ScrollToBottom();
                         });
                     },
-                    model: _currentModel,
                     ct: _cts.Token);
 
                 // Mostrar el mensaje limpio del agente (sin JSON crudo)
                 if (!string.IsNullOrWhiteSpace(response.Message))
                 {
                     agentMsg.Content = response.Message;
+                }
+
+                if (response.UsedFallback)
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        elAiStatus.Fill = new SolidColorBrush(Color.FromRgb(245, 158, 11));
+                        txtAiStatus.Text = "Respaldo Groq activo";
+                    });
+
+                    if (!string.IsNullOrWhiteSpace(response.ProviderNotice))
+                    {
+                        AddAgentMessage($"Aviso del sistema: {response.ProviderNotice}");
+                    }
+                }
+                else if (!string.IsNullOrWhiteSpace(response.ProviderUsed))
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        elAiStatus.Fill = new SolidColorBrush(Color.FromRgb(6, 148, 148));
+                        txtAiStatus.Text = $"Activo: {response.ProviderUsed}";
+                    });
                 }
 
                 // ── Acción: crear proforma ────────────────────────────────────
@@ -163,8 +213,10 @@ namespace MakriFormas
             {
                 pnlThinking.Visibility = Visibility.Collapsed;
                 btnSend.IsEnabled = true;
+                btnAttach.IsEnabled = true;
                 _cts?.Dispose();
                 _cts = null;
+                ClearAttachment();
                 ScrollToBottom();
             }
         }
@@ -181,45 +233,94 @@ namespace MakriFormas
             scrollChat.ScrollToBottom();
         }
 
-        private async Task CheckOllamaStatusAsync()
+        private async Task<string> BuildAttachmentContextAsync(string filePath, CancellationToken ct)
         {
-            // Primer chequeo inmediato
-            var ok = await OllamaLauncher.IsPingOkAsync();
+            var ext = Path.GetExtension(filePath).ToLowerInvariant();
+            var isSupported = ext is ".pdf" or ".png" or ".jpg" or ".jpeg" or ".bmp" or ".tif" or ".tiff";
 
-            if (!ok)
+            if (!isSupported)
+                return "[No se pudo analizar el adjunto: formato no compatible.]";
+
+            var extracted = await PdfImportService.ExtractTextAsync(filePath, ct);
+            if (string.IsNullOrWhiteSpace(extracted))
+                return "[No se extrajo texto útil del archivo adjunto.]";
+
+            if (extracted.Length > MaxAttachmentContextChars)
             {
-                // Ollama todavía arrancando — mostrar "Iniciando..."
-                Dispatcher.Invoke(() =>
-                {
-                    elOllamaStatus.Fill = new SolidColorBrush(Color.FromRgb(245, 158, 11)); // ámbar
-                    txtOllamaStatus.Text = "Iniciando Ollama...";
-                    txtModelInfo.Text = $"Modelo: {OllamaService.ChatPrimaryModel} | Respaldo: {OllamaService.ChatFallbackModel}";
-                });
-
-                // Esperar hasta 30 s reintentando cada 2 s
-                for (int i = 0; i < 15; i++)
-                {
-                    await Task.Delay(2000);
-                    ok = await OllamaLauncher.IsPingOkAsync();
-                    if (ok) break;
-                }
+                extracted = extracted[..MaxAttachmentContextChars] +
+                    "\n\n[Contenido recortado por longitud para conversación.]";
             }
+
+            return extracted;
+        }
+
+        private static string ComposeUserMessageWithAttachment(string userText, string filePath, string extractedText)
+        {
+            var fileName = Path.GetFileName(filePath);
+
+            var instruction = string.IsNullOrWhiteSpace(userText)
+                ? "Analiza el archivo adjunto y responde en español."
+                : userText;
+
+            return $"{instruction}\n\n[ARCHIVO_ADJUNTO]\nNombre: {fileName}\nContenido extraído:\n{extractedText}\n[/ARCHIVO_ADJUNTO]";
+        }
+
+        private void AttachFile_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new OpenFileDialog
+            {
+                Filter = "Archivos compatibles (*.pdf;*.png;*.jpg;*.jpeg;*.bmp;*.tif;*.tiff)|*.pdf;*.png;*.jpg;*.jpeg;*.bmp;*.tif;*.tiff|PDF (*.pdf)|*.pdf|Imágenes (*.png;*.jpg;*.jpeg;*.bmp;*.tif;*.tiff)|*.png;*.jpg;*.jpeg;*.bmp;*.tif;*.tiff",
+                Title = "Seleccionar archivo para conversación"
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                _attachedFilePath = dialog.FileName;
+                txtAttachment.Text = $"Adjunto listo: {Path.GetFileName(_attachedFilePath)}";
+                txtAttachment.Visibility = Visibility.Visible;
+                btnClearAttachment.Visibility = Visibility.Visible;
+            }
+        }
+
+        private void ClearAttachment_Click(object sender, RoutedEventArgs e)
+        {
+            ClearAttachment();
+        }
+
+        private void ClearAttachment()
+        {
+            _attachedFilePath = null;
+            txtAttachment.Text = string.Empty;
+            txtAttachment.Visibility = Visibility.Collapsed;
+            btnClearAttachment.Visibility = Visibility.Collapsed;
+        }
+
+        private Task CheckAiStatusAsync()
+        {
+            var hasGoogleKey = !string.IsNullOrWhiteSpace(SecureSecretsService.GetGoogleApiKey());
+            var hasGroqKey = !string.IsNullOrWhiteSpace(SecureSecretsService.GetGroqApiKey());
+            var options = AiSettingsService.GetOptions();
 
             Dispatcher.Invoke(() =>
             {
-                if (ok)
+                txtModelInfo.Text =
+                    $"Google: {options.GoogleChatModel} | Visión: {options.GoogleVisionModel} | Groq: {options.GroqChatModel}";
+
+                if (hasGoogleKey)
                 {
-                    elOllamaStatus.Fill = new SolidColorBrush(Color.FromRgb(6, 148, 148));
-                    txtOllamaStatus.Text = "Ollama activo ✓";
-                    txtModelInfo.Text = $"Modelo: {OllamaService.ChatPrimaryModel} | Respaldo: {OllamaService.ChatFallbackModel}";
+                    elAiStatus.Fill = new SolidColorBrush(Color.FromRgb(6, 148, 148));
+                    txtAiStatus.Text = hasGroqKey
+                        ? "IA cloud lista ✓"
+                        : "Google listo (sin respaldo Groq)";
                 }
                 else
                 {
-                    elOllamaStatus.Fill = new SolidColorBrush(Color.FromRgb(200, 80, 80));
-                    txtOllamaStatus.Text = "Ollama no disponible";
-                    txtModelInfo.Text = "El asistente no puede responder";
+                    elAiStatus.Fill = new SolidColorBrush(Color.FromRgb(200, 80, 80));
+                    txtAiStatus.Text = "Falta Google API key";
                 }
             });
+
+            return Task.CompletedTask;
         }
     }
 }

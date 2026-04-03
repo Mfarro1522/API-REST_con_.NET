@@ -53,7 +53,55 @@ namespace MakriFormas.Services
                     ItemsJson TEXT NOT NULL,
                     CreatedAt TEXT NOT NULL,
                     UpdatedAt TEXT NOT NULL
+                );
+
+                CREATE TABLE IF NOT EXISTS Settings (
+                    Key TEXT PRIMARY KEY,
+                    Value TEXT NOT NULL,
+                    UpdatedAt TEXT NOT NULL
                 );";
+            command.ExecuteNonQuery();
+        }
+
+        public static string? GetSetting(string key)
+        {
+            Initialize();
+
+            using var connection = CreateConnection(DatabasePath);
+            connection.Open();
+
+            using var command = connection.CreateCommand();
+            command.CommandText = "SELECT Value FROM Settings WHERE Key = $key LIMIT 1;";
+            command.Parameters.AddWithValue("$key", key);
+
+            var value = command.ExecuteScalar();
+            return value?.ToString();
+        }
+
+        public static string GetSetting(string key, string defaultValue)
+        {
+            var value = GetSetting(key);
+            return string.IsNullOrWhiteSpace(value) ? defaultValue : value;
+        }
+
+        public static void SetSetting(string key, string value)
+        {
+            Initialize();
+
+            using var connection = CreateConnection(DatabasePath);
+            connection.Open();
+
+            using var command = connection.CreateCommand();
+            command.CommandText = @"
+                INSERT INTO Settings (Key, Value, UpdatedAt)
+                VALUES ($key, $value, $updatedAt)
+                ON CONFLICT(Key) DO UPDATE
+                SET Value = excluded.Value,
+                    UpdatedAt = excluded.UpdatedAt;";
+            command.Parameters.AddWithValue("$key", key);
+            command.Parameters.AddWithValue("$value", value ?? string.Empty);
+            command.Parameters.AddWithValue("$updatedAt", DateTime.Now.ToString("O", CultureInfo.InvariantCulture));
+
             command.ExecuteNonQuery();
         }
 

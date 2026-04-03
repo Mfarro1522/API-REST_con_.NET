@@ -19,51 +19,57 @@ namespace MakriFormas.Services
 {
     /// <summary>
     /// Pipeline de importación de archivo:
-    ///   1. Extrae texto (PDF: iText9 nativo → OCR / Imagen: OCR directo)
-    ///   2. Estructura el texto con IA (Ollama)
+    ///   1. Extrae texto (multimodal cloud con fallback local)
+    ///   2. Estructura el texto con IA cloud
     ///   3. Deduplica contra la base de datos
     /// </summary>
     public static class PdfImportService
     {
         // ── Paso 1: Extracción de texto ───────────────────────────────────────
 
-        public static async Task<string> ExtractTextAsync(string pdfPath, CancellationToken ct = default)
+        public static async Task<string> ExtractTextAsync(string filePath, CancellationToken ct = default)
         {
-            if (IsImagePath(pdfPath))
+            if (IsImagePath(filePath))
             {
-                var windowsImageText = await ExtractImageWithWindowsOcrAsync(pdfPath, ct);
-                if (IsLikelyUsefulText(windowsImageText))
-                    return windowsImageText;
-
-                var ollamaImageText = await ExtractImageWithOllamaOcrAsync(pdfPath, ct);
-                if (IsLikelyUsefulText(ollamaImageText))
-                    return ollamaImageText;
-
-                return "[No se pudo extraer texto suficiente de la imagen. Prueba una imagen más nítida o de mayor resolución.]";
+                return await ExtractFromImageAsync(filePath, ct);
             }
 
-            if (!IsPdfPath(pdfPath))
+            if (!IsPdfPath(filePath))
             {
                 return "[Formato no compatible. Usa un archivo PDF o imagen (PNG/JPG/BMP/TIF).]";
             }
 
-            // Intentamos iText9 primero
-            var text = ExtractWithIText(pdfPath);
+            return await ExtractFromPdfAsync(filePath, ct);
+        }
 
-            if (!string.IsNullOrWhiteSpace(text) && text.Length >= 50)
-                return text;
+        private static async Task<string> ExtractFromImageAsync(string imagePath, CancellationToken ct)
+        {
+            var multimodalText = await ExtractWithMultimodalImageAsync(imagePath, ct);
+            if (IsLikelyUsefulText(multimodalText))
+                return multimodalText;
 
-            // Fallback 1: Windows OCR
-            var windowsOcrText = await ExtractWithWindowsOcrAsync(pdfPath, ct);
-            if (!string.IsNullOrWhiteSpace(windowsOcrText) && windowsOcrText.Length >= 20)
-                return windowsOcrText;
+            var windowsText = await ExtractImageWithWindowsOcrAsync(imagePath, ct);
+            if (IsLikelyUsefulText(windowsText))
+                return windowsText;
 
-            // Fallback 2: Ollama OCR (glm-ocr)
-            var ollamaOcrText = await ExtractWithOllamaOcrAsync(pdfPath, ct);
-            if (!string.IsNullOrWhiteSpace(ollamaOcrText) && ollamaOcrText.Length >= 20)
-                return ollamaOcrText;
+            return "[No se pudo extraer texto suficiente de la imagen. Verifica nitidez y contraste.]";
+        }
 
-            return "[No se pudo extraer texto suficiente del archivo. Prueba un PDF o imagen con mejor calidad o mayor resolución.]";
+        private static async Task<string> ExtractFromPdfAsync(string pdfPath, CancellationToken ct)
+        {
+            var nativeText = ExtractWithIText(pdfPath);
+            if (IsLikelyUsefulText(nativeText, threshold: 50))
+                return nativeText;
+
+            var multimodalText = await ExtractWithMultimodalPdfAsync(pdfPath, ct);
+            if (IsLikelyUsefulText(multimodalText))
+                return multimodalText;
+
+            var windowsText = await ExtractWithWindowsOcrAsync(pdfPath, ct);
+            if (IsLikelyUsefulText(windowsText))
+                return windowsText;
+
+            return "[No se pudo extraer texto suficiente del archivo. Prueba con un PDF o imagen de mayor calidad.]";
         }
 
         private static bool IsPdfPath(string path)
@@ -80,6 +86,20 @@ namespace MakriFormas.Services
                 || ext.Equals(".bmp", StringComparison.OrdinalIgnoreCase)
                 || ext.Equals(".tif", StringComparison.OrdinalIgnoreCase)
                 || ext.Equals(".tiff", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string ResolveImageMimeType(string path)
+        {
+            var ext = Path.GetExtension(path).ToLowerInvariant();
+            return ext switch
+            {
+                ".jpg" => "image/jpeg",
+                ".jpeg" => "image/jpeg",
+                ".bmp" => "image/bmp",
+                ".tif" => "image/tiff",
+                ".tiff" => "image/tiff",
+                _ => "image/png"
+            };
         }
 
         private static string ExtractWithIText(string pdfPath)
@@ -105,52 +125,20 @@ namespace MakriFormas.Services
             }
         }
 
-        private static async Task<string> ExtractWithWindowsOcrAsync(string pdfPath, CancellationToken ct)
+        private static async Task<string> ExtractWithMultimodalImageAsync(string imagePath, CancellationToken ct)
         {
             try
             {
-                var engine = OcrEngine.TryCreateFromUserProfileLanguages();
-                if (engine is null)
-                {
+                var imageBytes = await File.ReadAllBytesAsync(imagePath, ct);
+                if (imageBytes.Length == 0)
                     return string.Empty;
-                }
 
-                var file = await StorageFile.GetFileFromPathAsync(pdfPath);
-                var pdf = await Windows.Data.Pdf.PdfDocument.LoadFromFileAsync(file);
+                var route = await AiProviderRouter.Instance.ExtractTextFromImageAsync(
+                    imageBytes,
+                    ResolveImageMimeType(imagePath),
+                    ct);
 
-                if (pdf.PageCount == 0)
-                {
-                    return string.Empty;
-                }
-
-                var sb = new StringBuilder();
-
-                for (uint i = 0; i < pdf.PageCount; i++)
-                {
-                    ct.ThrowIfCancellationRequested();
-
-                    using var page = pdf.GetPage(i);
-                    using var stream = new InMemoryRandomAccessStream();
-                    await page.RenderToStreamAsync(stream);
-
-                    stream.Seek(0);
-                    var decoder = await BitmapDecoder.CreateAsync(stream);
-                    using var bitmap = await decoder.GetSoftwareBitmapAsync(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
-                    var result = await engine.RecognizeAsync(bitmap);
-
-                    if (!string.IsNullOrWhiteSpace(result.Text))
-                    {
-                        sb.AppendLine(result.Text);
-                    }
-                }
-
-                var extracted = sb.ToString().Trim();
-                if (!string.IsNullOrWhiteSpace(extracted) && extracted.Length >= 20)
-                {
-                    return extracted;
-                }
-
-                return string.Empty;
+                return route.Success ? route.Content.Trim() : string.Empty;
             }
             catch (OperationCanceledException)
             {
@@ -162,14 +150,8 @@ namespace MakriFormas.Services
             }
         }
 
-        private static async Task<string> ExtractWithOllamaOcrAsync(string pdfPath, CancellationToken ct)
+        private static async Task<string> ExtractWithMultimodalPdfAsync(string pdfPath, CancellationToken ct)
         {
-            const string model = "glm-ocr:q8_0";
-            const string systemPrompt =
-                "Eres un motor OCR. Tu tarea es transcribir texto de documentos comerciales de forma literal y ordenada.";
-            const string userPrompt =
-                "Extrae TODO el texto visible de esta pagina de PDF. Devuelve solo texto plano sin JSON ni comentarios.";
-
             try
             {
                 var file = await StorageFile.GetFileFromPathAsync(pdfPath);
@@ -188,17 +170,55 @@ namespace MakriFormas.Services
                     if (pageImage.Length == 0)
                         continue;
 
-                    var pageText = await OllamaService.Instance.ChatImageOnceAsync(
-                        systemPrompt,
-                        userPrompt,
-                        pageImage,
-                        model,
-                        ct);
+                    var route = await AiProviderRouter.Instance.ExtractTextFromImageAsync(pageImage, "image/png", ct);
+                    if (route.Success && IsLikelyUsefulText(route.Content))
+                    {
+                        sb.AppendLine(route.Content.Trim());
+                    }
+                }
 
-                    var cleanedPageText = NormalizeOllamaOcrText(pageText);
+                return sb.ToString().Trim();
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
 
-                    if (IsLikelyUsefulText(cleanedPageText))
-                        sb.AppendLine(cleanedPageText);
+        private static async Task<string> ExtractWithWindowsOcrAsync(string pdfPath, CancellationToken ct)
+        {
+            try
+            {
+                var engine = OcrEngine.TryCreateFromUserProfileLanguages();
+                if (engine is null)
+                    return string.Empty;
+
+                var file = await StorageFile.GetFileFromPathAsync(pdfPath);
+                var pdf = await Windows.Data.Pdf.PdfDocument.LoadFromFileAsync(file);
+                if (pdf.PageCount == 0)
+                    return string.Empty;
+
+                var sb = new StringBuilder();
+
+                for (uint i = 0; i < pdf.PageCount; i++)
+                {
+                    ct.ThrowIfCancellationRequested();
+
+                    using var page = pdf.GetPage(i);
+                    using var stream = new InMemoryRandomAccessStream();
+                    await page.RenderToStreamAsync(stream);
+
+                    stream.Seek(0);
+                    var decoder = await BitmapDecoder.CreateAsync(stream);
+                    using var bitmap = await decoder.GetSoftwareBitmapAsync(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
+                    var result = await engine.RecognizeAsync(bitmap);
+
+                    if (!string.IsNullOrWhiteSpace(result.Text))
+                        sb.AppendLine(result.Text);
                 }
 
                 return sb.ToString().Trim();
@@ -242,39 +262,6 @@ namespace MakriFormas.Services
             }
         }
 
-        private static async Task<string> ExtractImageWithOllamaOcrAsync(string imagePath, CancellationToken ct)
-        {
-            const string model = "glm-ocr:q8_0";
-            const string systemPrompt =
-                "Eres un motor OCR. Tu tarea es transcribir texto de documentos comerciales de forma literal y ordenada.";
-            const string userPrompt =
-                "Extrae TODO el texto visible de esta imagen. Devuelve solo texto plano sin JSON ni comentarios.";
-
-            try
-            {
-                var imageBytes = await File.ReadAllBytesAsync(imagePath, ct);
-                if (imageBytes.Length == 0)
-                    return string.Empty;
-
-                var response = await OllamaService.Instance.ChatImageOnceAsync(
-                    systemPrompt,
-                    userPrompt,
-                    imageBytes,
-                    model,
-                    ct);
-
-                return NormalizeOllamaOcrText(response);
-            }
-            catch (OperationCanceledException)
-            {
-                throw;
-            }
-            catch
-            {
-                return string.Empty;
-            }
-        }
-
         private static async Task<byte[]> RenderPageAsPngAsync(Windows.Data.Pdf.PdfPage page)
         {
             using var rendered = new InMemoryRandomAccessStream();
@@ -301,123 +288,37 @@ namespace MakriFormas.Services
             return bytes;
         }
 
-        private static string NormalizeOllamaOcrText(string text)
-        {
-            if (string.IsNullOrWhiteSpace(text))
-                return string.Empty;
-
-            var clean = text
-                .Replace("```", " ", StringComparison.Ordinal)
-                .Replace("markdown", " ", StringComparison.OrdinalIgnoreCase)
-                .Replace("text", " ", StringComparison.OrdinalIgnoreCase);
-
-            var lines = clean
-                .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
-                .Select(l => l.Trim())
-                .Where(l => !string.IsNullOrWhiteSpace(l));
-
-            return string.Join(Environment.NewLine, lines).Trim();
-        }
-
-        private static bool IsLikelyUsefulText(string text)
+        private static bool IsLikelyUsefulText(string text, int threshold = 20)
         {
             if (string.IsNullOrWhiteSpace(text))
                 return false;
 
             var informativeChars = text.Count(char.IsLetterOrDigit);
-            return informativeChars >= 15;
+            return informativeChars >= threshold;
         }
 
         // ── Paso 2: Estructuración con IA ─────────────────────────────────────
 
         public static async Task<List<ImportedProductDto>> StructureWithAiAsync(
             string rawText,
-            string model = "qwen2.5:1.5b",
             CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(rawText))
                 return new List<ImportedProductDto>();
 
-            var systemPrompt = OllamaService.LoadPdfExtractPrompt();
+            var systemPrompt = AiSettingsService.LoadPdfExtractPrompt();
             if (string.IsNullOrWhiteSpace(systemPrompt))
                 systemPrompt = "Extrae los productos del texto y devuelve un array JSON: [{\"nombre\":\"\",\"precio\":0,\"unidad\":\"unidad\"}]";
 
-            var modelCandidates = new[] { model, "qwen2.5:1.5b", "qwen3.5:cloud" }
-                .Where(m => !string.IsNullOrWhiteSpace(m))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToList();
+            var route = await AiProviderRouter.Instance.StructureProductsAsync(systemPrompt, rawText, ct);
+            if (!route.Success)
+                throw new InvalidOperationException($"No se pudo estructurar productos con IA: {route.Error}");
 
-            var errors = new List<string>();
+            var parsed = ParseProductList(route.Content);
+            if (parsed.Count == 0)
+                throw new InvalidOperationException("La IA no devolvió productos válidos para importar.");
 
-            foreach (var candidate in modelCandidates)
-            {
-                var response = await OllamaService.Instance.ChatOnceAsync(systemPrompt, rawText, candidate, ct);
-                var parsed = ParseProductList(response);
-                if (parsed.Count > 0)
-                    return parsed;
-
-                if (LooksLikeOllamaError(response, out var err))
-                    errors.Add($"{candidate}: {err}");
-            }
-
-            var details = errors.Count > 0
-                ? string.Join(" | ", errors)
-                : "No se pudo interpretar respuesta JSON de productos.";
-
-            throw new InvalidOperationException(
-                "No se extrajeron productos del archivo importado. " +
-                $"Modelos probados: {string.Join(", ", modelCandidates)}. " +
-                $"Detalle: {details}");
-        }
-
-        private static bool LooksLikeOllamaError(string response, out string errorMessage)
-        {
-            errorMessage = string.Empty;
-            if (string.IsNullOrWhiteSpace(response))
-            {
-                errorMessage = "respuesta vacia";
-                return true;
-            }
-
-            var txt = response.Trim();
-            if (txt.StartsWith("{", StringComparison.Ordinal) && txt.EndsWith("}", StringComparison.Ordinal))
-            {
-                try
-                {
-                    using var doc = JsonDocument.Parse(txt);
-                    var root = doc.RootElement;
-
-                    if (root.TryGetProperty("error", out var errProp))
-                    {
-                        errorMessage = errProp.GetString() ?? "error desconocido";
-                        return true;
-                    }
-
-                    if (root.TryGetProperty("message", out var msgProp))
-                    {
-                        var msg = msgProp.ValueKind switch
-                        {
-                            JsonValueKind.String => msgProp.GetString() ?? string.Empty,
-                            JsonValueKind.Object when msgProp.TryGetProperty("content", out var c) => c.GetString() ?? string.Empty,
-                            _ => string.Empty
-                        };
-
-                        if (msg.Contains("Ollama", StringComparison.OrdinalIgnoreCase) ||
-                            msg.Contains("model", StringComparison.OrdinalIgnoreCase) ||
-                            msg.Contains("no est", StringComparison.OrdinalIgnoreCase))
-                        {
-                            errorMessage = msg;
-                            return true;
-                        }
-                    }
-                }
-                catch
-                {
-                    // Ignorar parse errors, no es necesariamente error de Ollama.
-                }
-            }
-
-            return false;
+            return parsed;
         }
 
         private static List<ImportedProductDto> ParseProductList(string json)

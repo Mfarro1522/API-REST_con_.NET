@@ -57,7 +57,6 @@ namespace MakriFormas
     public partial class ImportReviewWindow : Window
     {
         private readonly string _pdfPath;
-        private readonly string _model;
 
         private List<NewProductRow>   _newRows     = new();
         private List<ChangedPriceRow> _changedRows = new();
@@ -66,11 +65,10 @@ namespace MakriFormas
         /// <summary>Se dispara si el usuario confirmó la importación.</summary>
         public event EventHandler? ImportConfirmed;
 
-        public ImportReviewWindow(string pdfPath, string model = "qwen2.5:1.5b")
+        public ImportReviewWindow(string pdfPath)
         {
             InitializeComponent();
             _pdfPath = pdfPath;
-            _model   = model;
 
             Loaded += async (_, _) => await ProcessPdfAsync();
         }
@@ -89,7 +87,7 @@ namespace MakriFormas
                 var rawText = await PdfImportService.ExtractTextAsync(_pdfPath);
 
                 UpdateProgress("Estructurando productos con IA...");
-                var products = await PdfImportService.StructureWithAiAsync(rawText, _model);
+                var products = await PdfImportService.StructureWithAiAsync(rawText);
 
                 UpdateProgress("Deduplicando contra la base de datos...");
                 var result = PdfImportService.Deduplicate(products);

@@ -82,6 +82,12 @@ namespace MakriFormas
             chatWindow.Show();
         }
 
+        private void OpenAiSettings_Click(object sender, RoutedEventArgs e)
+        {
+            var win = new AiProviderSettingsWindow { Owner = this };
+            win.ShowDialog();
+        }
+
         private void OpenImportPdf_Click(object sender, RoutedEventArgs e)
         {
             var dialog = new Microsoft.Win32.OpenFileDialog

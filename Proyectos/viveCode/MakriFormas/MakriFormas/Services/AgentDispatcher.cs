@@ -31,7 +31,13 @@ namespace MakriFormas.Services
     /// <summary>
     /// Resultado que devuelve el agente para cada turno de conversación.
     /// </summary>
-    public record AgentResponse(string Message, bool DbChanged, object? Data = null);
+    public record AgentResponse(
+        string Message,
+        bool DbChanged,
+        object? Data = null,
+        bool UsedFallback = false,
+        string ProviderUsed = "",
+        string ProviderNotice = "");
 
     /// <summary>
     /// Parsea el JSON producido por el modelo y ejecuta la acción sobre la DB.
@@ -57,42 +63,57 @@ namespace MakriFormas.Services
             string model = "",
             CancellationToken ct = default)
         {
-            var systemPrompt = OllamaService.LoadSystemPromptWithUnits();
+            _ = model;
 
-            var candidates = OllamaService.GetChatModelCandidates(model);
-            var errors = new List<string>();
+            var systemPrompt = AiSettingsService.LoadAgentPromptWithUnits();
+            var route = await AiProviderRouter.Instance.ChatTextAsync(systemPrompt, userMessage, ct);
 
-            foreach (var candidate in candidates)
+            if (!route.Success)
             {
-                var rawResponse = await OllamaService.Instance.ChatOnceAsync(systemPrompt, userMessage, candidate, ct);
-                if (IsQuotaOrModelFailure(rawResponse, out var reason))
+                return new AgentResponse($"No pude responder: {route.Error}", DbChanged: false);
+            }
+
+            if (TryParseAndDispatch(route.Content, out var result))
+            {
+                return result! with
                 {
-                    errors.Add($"{candidate}: {reason}");
-                    continue;
-                }
+                    UsedFallback = route.UsedFallback,
+                    ProviderUsed = route.ProviderUsed,
+                    ProviderNotice = route.Notice
+                };
+            }
 
-                if (TryParseAndDispatch(rawResponse, out var result))
-                    return result!;
+            var correctionMessage = $"Tu respuesta anterior fue: {route.Content}\n{CorrectionPrompt}";
+            var correctionRoute = await AiProviderRouter.Instance.ChatTextAsync(systemPrompt, correctionMessage, ct);
+            if (!correctionRoute.Success)
+            {
+                return new AgentResponse($"No pude corregir la respuesta del modelo: {correctionRoute.Error}", DbChanged: false);
+            }
 
-                // ── Reintento con prompt de corrección ────────────────────
-                var correctionMessage = $"Tu respuesta anterior fue: {rawResponse}\n{CorrectionPrompt}";
-                var retryResponse = await OllamaService.Instance.ChatOnceAsync(systemPrompt, correctionMessage, candidate, ct);
+            if (TryParseAndDispatch(correctionRoute.Content, out result))
+            {
+                var usedFallback = route.UsedFallback || correctionRoute.UsedFallback;
+                var provider = string.IsNullOrWhiteSpace(correctionRoute.ProviderUsed)
+                    ? route.ProviderUsed
+                    : correctionRoute.ProviderUsed;
+                var notice = !string.IsNullOrWhiteSpace(correctionRoute.Notice)
+                    ? correctionRoute.Notice
+                    : route.Notice;
 
-                if (IsQuotaOrModelFailure(retryResponse, out reason))
+                return result! with
                 {
-                    errors.Add($"{candidate}: {reason}");
-                    continue;
-                }
-
-                if (TryParseAndDispatch(retryResponse, out result))
-                    return result!;
+                    UsedFallback = usedFallback,
+                    ProviderUsed = provider,
+                    ProviderNotice = notice
+                };
             }
 
             return new AgentResponse(
-                errors.Count > 0
-                    ? $"No pude responder con los modelos configurados. Detalle: {string.Join(" | ", errors)}"
-                    : "No pude interpretar la respuesta de los modelos configurados.",
-                DbChanged: false);
+                "No pude interpretar la respuesta de los modelos configurados.",
+                DbChanged: false,
+                ProviderUsed: route.ProviderUsed,
+                UsedFallback: route.UsedFallback,
+                ProviderNotice: route.Notice);
         }
 
         // ── Streaming: acumula tokens y despacha al terminar ─────────────────
@@ -106,93 +127,58 @@ namespace MakriFormas.Services
             string model = "",
             CancellationToken ct = default)
         {
-            var systemPrompt = OllamaService.LoadSystemPromptWithUnits();
+            _ = model;
 
-            var candidates = OllamaService.GetChatModelCandidates(model);
-            var errors = new List<string>();
-
-            foreach (var candidate in candidates)
+            var systemPrompt = AiSettingsService.LoadAgentPromptWithUnits();
+            var route = await AiProviderRouter.Instance.ChatTextAsync(systemPrompt, userMessage, ct);
+            if (!route.Success)
             {
-                var fullResponse = new System.Text.StringBuilder();
+                return new AgentResponse($"No pude responder: {route.Error}", DbChanged: false);
+            }
 
-                await foreach (var token in OllamaService.Instance.ChatStreamAsync(systemPrompt, userMessage, candidate, ct))
+            onToken(route.Content);
+
+            if (TryParseAndDispatch(route.Content, out var result))
+            {
+                return result! with
                 {
-                    fullResponse.Append(token);
-                }
+                    UsedFallback = route.UsedFallback,
+                    ProviderUsed = route.ProviderUsed,
+                    ProviderNotice = route.Notice
+                };
+            }
 
-                var raw = fullResponse.ToString();
+            var correctionMessage = $"Tu respuesta anterior fue: {route.Content}\n{CorrectionPrompt}";
+            var correctionRoute = await AiProviderRouter.Instance.ChatTextAsync(systemPrompt, correctionMessage, ct);
+            if (!correctionRoute.Success)
+            {
+                return new AgentResponse($"No pude corregir la respuesta del modelo: {correctionRoute.Error}", DbChanged: false);
+            }
 
-                if (IsQuotaOrModelFailure(raw, out var reason))
+            if (TryParseAndDispatch(correctionRoute.Content, out result))
+            {
+                var usedFallback = route.UsedFallback || correctionRoute.UsedFallback;
+                var provider = string.IsNullOrWhiteSpace(correctionRoute.ProviderUsed)
+                    ? route.ProviderUsed
+                    : correctionRoute.ProviderUsed;
+                var notice = !string.IsNullOrWhiteSpace(correctionRoute.Notice)
+                    ? correctionRoute.Notice
+                    : route.Notice;
+
+                return result! with
                 {
-                    errors.Add($"{candidate}: {reason}");
-                    continue;
-                }
-
-                onToken(raw);
-
-                if (TryParseAndDispatch(raw, out var result))
-                    return result!;
-
-                // Reintento sin streaming en el mismo modelo
-                var correctionMessage = $"Tu respuesta anterior fue: {raw}\n{CorrectionPrompt}";
-                var retryResponse = await OllamaService.Instance.ChatOnceAsync(systemPrompt, correctionMessage, candidate, ct);
-
-                if (IsQuotaOrModelFailure(retryResponse, out reason))
-                {
-                    errors.Add($"{candidate}: {reason}");
-                    continue;
-                }
-
-                if (TryParseAndDispatch(retryResponse, out result))
-                    return result!;
+                    UsedFallback = usedFallback,
+                    ProviderUsed = provider,
+                    ProviderNotice = notice
+                };
             }
 
             return new AgentResponse(
-                errors.Count > 0
-                    ? $"No pude responder con los modelos configurados. Detalle: {string.Join(" | ", errors)}"
-                    : "No pude interpretar la respuesta de los modelos configurados.",
-                DbChanged: false);
-        }
-
-        private static bool IsQuotaOrModelFailure(string raw, out string reason)
-        {
-            reason = string.Empty;
-            if (string.IsNullOrWhiteSpace(raw))
-            {
-                reason = "respuesta vacía";
-                return true;
-            }
-
-            var txt = raw.Trim();
-
-            if (txt.Contains("[MODEL_ERROR]", StringComparison.OrdinalIgnoreCase))
-            {
-                reason = txt;
-                return true;
-            }
-
-            var quotaKeywords = new[]
-            {
-                "quota",
-                "rate limit",
-                "too many requests",
-                "límite",
-                "limite",
-                "exceeded",
-                "credit",
-                "insufficient"
-            };
-
-            foreach (var keyword in quotaKeywords)
-            {
-                if (txt.Contains(keyword, StringComparison.OrdinalIgnoreCase))
-                {
-                    reason = txt;
-                    return true;
-                }
-            }
-
-            return false;
+                "No pude interpretar la respuesta de los modelos configurados.",
+                DbChanged: false,
+                ProviderUsed: route.ProviderUsed,
+                UsedFallback: route.UsedFallback,
+                ProviderNotice: route.Notice);
         }
 
         // ── Parser + Dispatcher ───────────────────────────────────────────────
