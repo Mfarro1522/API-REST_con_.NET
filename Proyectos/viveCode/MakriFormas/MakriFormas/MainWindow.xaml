@@ -5,262 +5,325 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MakriFormas"
         mc:Ignorable="d"
-        Title="Makricolors Publicidad" Height="820" Width="1240" MinHeight="720" MinWidth="1080"
+        Title="Makricolors Publicidad" Height="820" Width="1280" MinHeight="720" MinWidth="1100"
         WindowState="Maximized">
-    <Window.Resources>
-        <Style x:Key="ModernTabControl" TargetType="{x:Type TabControl}">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="0" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type TabControl}">
-                        <Grid ClipToBounds="true" SnapsToDevicePixels="true" KeyboardNavigation.TabNavigation="Local">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="*" />
-                            </Grid.RowDefinitions>
-                            <TabPanel x:Name="HeaderPanel" IsItemsHost="true" Margin="0" Grid.Row="0" Background="Transparent" KeyboardNavigation.TabIndex="1" Panel.ZIndex="1"/>
-                            <Border x:Name="ContentPanel" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Background="{TemplateBinding Background}" Grid.Row="1" KeyboardNavigation.TabIndex="2" KeyboardNavigation.DirectionalNavigation="Contained">
-                                <ContentPresenter x:Name="PART_SelectedContentHost" Margin="{TemplateBinding Padding}" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" ContentSource="SelectedContent"/>
-                            </Border>
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
 
-        <Style x:Key="ModernTabItem" TargetType="{x:Type TabItem}">
-            <Setter Property="Background" Value="{StaticResource SurfaceAltBrush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource BorderSoftBrush}" />
-            <Setter Property="BorderThickness" Value="1,1,1,0" />
-            <Setter Property="Padding" Value="18,11" />
-            <Setter Property="Margin" Value="0,0,4,0" />
-            <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type TabItem}">
-                        <Grid SnapsToDevicePixels="true">
-                            <Border x:Name="Bd" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}" CornerRadius="6,6,0,0">
-                                <ContentPresenter x:Name="Content" HorizontalAlignment="{Binding HorizontalContentAlignment, RelativeSource={RelativeSource FindAncestor, AncestorLevel=1, AncestorType={x:Type ItemsControl}}}" VerticalAlignment="{Binding VerticalContentAlignment, RelativeSource={RelativeSource FindAncestor, AncestorLevel=1, AncestorType={x:Type ItemsControl}}}" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" ContentSource="Header" RecognizesAccessKey="True"/>
-                            </Border>
-                        </Grid>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsSelected" Value="true">
-                                <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
-                                <Setter Property="BorderBrush" Value="{StaticResource BrandBrush}" />
-                                <Setter Property="Foreground" Value="{StaticResource BrandDarkBrush}" />
-                                <Setter Property="Panel.ZIndex" Value="1" />
-                            </Trigger>
-                            <Trigger Property="IsMouseOver" Value="true" SourceName="Bd">
-                                <Setter Property="Background" Value="{StaticResource TropicalYellowTintBrush}" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-    </Window.Resources>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="220" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition x:Name="colChatDrawer" Width="0" />
+        </Grid.ColumnDefinitions>
 
-    <Grid Margin="20">
-        <Border Style="{StaticResource CardBorderStyle}" Padding="0" CornerRadius="18">
+        <!-- ══════════════ SIDEBAR ══════════════ -->
+        <Border Grid.Column="0" Background="{StaticResource SidebarBrush}">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <Border Grid.Row="0" Background="{StaticResource TropicalPinkTintBrush}" Padding="22,16" BorderBrush="{StaticResource BorderSoftBrush}" BorderThickness="0,0,0,1">
+                <!-- Logo -->
+                <Border Grid.Row="0" Padding="18,20,18,16"
+                        BorderBrush="#2A4040" BorderThickness="0,0,0,1">
+                    <StackPanel Orientation="Horizontal">
+                        <Image Source="makriLogo.ico" Width="32" Height="32"
+                               Margin="0,0,10,0" VerticalAlignment="Center" />
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="MAKRICOLORS" FontSize="13" FontWeight="Black"
+                                       Foreground="White" />
+                            <TextBlock Text="Sistema Comercial" FontSize="10" Foreground="#6A9A9A" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Nav items -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="10,16,10,8">
+
+                        <TextBlock Text="MÓDULOS" FontSize="9" FontWeight="Bold"
+                                   Foreground="#4A7070" Margin="6,0,0,6" />
+
+                        <Button x:Name="btnNavDashboard"
+                                Style="{StaticResource NavItemActive}"
+                                Click="NavDashboard_Click">
+                            <TextBlock Text="🏠  Dashboard"
+                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
+                        </Button>
+
+                        <Button x:Name="btnNavNewProforma"
+                                Style="{StaticResource NavItem}"
+                                Click="NavNewProforma_Click"
+                                Margin="0,2,0,0">
+                            <TextBlock Text="📝  Nueva Proforma"
+                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
+                        </Button>
+
+                        <Button x:Name="btnNavHistory"
+                                Style="{StaticResource NavItem}"
+                                Click="NavHistory_Click"
+                                Margin="0,2,0,0">
+                            <TextBlock Text="🗂  Historial"
+                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
+                        </Button>
+
+                        <Button x:Name="btnNavInventory"
+                                Style="{StaticResource NavItem}"
+                                Click="NavInventory_Click"
+                                Margin="0,2,0,0">
+                            <TextBlock Text="📦  Inventario"
+                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
+                        </Button>
+
+                        <Separator Background="#2A4040" Margin="6,14,6,14" />
+
+                        <TextBlock Text="HERRAMIENTAS" FontSize="9" FontWeight="Bold"
+                                   Foreground="#4A7070" Margin="6,0,0,6" />
+
+                        <Button x:Name="btnNavAgent"
+                                Style="{StaticResource NavItem}"
+                                Click="ToggleChatDrawer_Click"
+                                Margin="0,2,0,0">
+                            <TextBlock Text="🤖  Asistente IA"
+                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
+                        </Button>
+
+                        <Button Style="{StaticResource NavItem}"
+                                Click="OpenImportPdf_Click"
+                                Margin="0,2,0,0">
+                            <TextBlock Text="📄  Importar Proforma"
+                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
+                        </Button>
+
+                        <Button Style="{StaticResource NavItem}"
+                                Click="OpenAiSettings_Click"
+                                Margin="0,2,0,0">
+                            <TextBlock Text="⚙️  Configuración IA"
+                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
+                        </Button>
+
+                        <Separator Background="#2A4040" Margin="6,14,6,14" />
+
+                        <TextBlock Text="BASE DE DATOS" FontSize="9" FontWeight="Bold"
+                                   Foreground="#4A7070" Margin="6,0,0,6" />
+
+                        <Button Style="{StaticResource NavItem}"
+                                Click="ImportDatabase_Click"
+                                Margin="0,2,0,0">
+                            <TextBlock Text="📥  Importar BD"
+                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
+                        </Button>
+
+                        <Button Style="{StaticResource NavItem}"
+                                Click="ExportDatabase_Click"
+                                Margin="0,2,0,0">
+                            <TextBlock Text="📤  Exportar BD"
+                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
+                        </Button>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- User info footer -->
+                <Border Grid.Row="2" Padding="14,12"
+                        BorderBrush="#2A4040" BorderThickness="0,1,0,0">
+                    <StackPanel Orientation="Horizontal">
+                        <Ellipse Width="30" Height="30">
+                            <Ellipse.Fill>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Color="#069494" />
+                                    <GradientStop Color="#FCE883" Offset="1" />
+                                </LinearGradientBrush>
+                            </Ellipse.Fill>
+                        </Ellipse>
+                        <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="Admin" FontWeight="Bold" FontSize="12" Foreground="White" />
+                            <TextBlock Text="Makricolors" FontSize="10" Foreground="#6A9A9A" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- ══════════════ MAIN CONTENT ══════════════ -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Top header bar -->
+            <Border Grid.Row="0" Background="{StaticResource TropicalPinkTintBrush}"
+                    BorderBrush="{StaticResource BorderSoftBrush}" BorderThickness="0,0,0,1"
+                    Padding="22,12">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock x:Name="txtCurrentSection"
+                                   Text="Dashboard" FontSize="20" FontWeight="Black" />
+                        <TextBlock x:Name="txtCurrentSectionSub"
+                                   Text="Panel principal"
+                                   FontSize="11" Foreground="{StaticResource TextMutedBrush}" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button x:Name="btnToggleChat"
+                                Content="🤖  Asistente"
+                                Style="{StaticResource GhostButton}"
+                                Click="ToggleChatDrawer_Click" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Section content area -->
+            <ContentControl x:Name="MainContent" Grid.Row="1" />
+        </Grid>
+
+        <!-- ══════════════ AI CHAT DRAWER ══════════════ -->
+        <Border Grid.Column="2"
+                Background="{StaticResource SurfaceBrush}"
+                BorderBrush="{StaticResource BorderSoftBrush}"
+                BorderThickness="1,0,0,0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Drawer header -->
+                <Border Grid.Row="0" Background="{StaticResource TropicalPinkTintBrush}"
+                        BorderBrush="{StaticResource BorderSoftBrush}" BorderThickness="0,0,0,1"
+                        Padding="16,12">
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Image Source="makriLogo.ico" Width="38" Height="38" Margin="0,0,12,0" />
-                            <StackPanel>
-                                <TextBlock Text="MAKRICOLORS PUBLICIDAD" FontSize="19" FontWeight="Black" />
-                                <TextBlock Text="Sistema Comercial y de Proformas" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
-                            </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="🤖 Asistente IA" FontSize="16" FontWeight="Black" />
+                            <TextBlock x:Name="txtModelInfo" Text="Cargando..."
+                                       FontSize="9" Foreground="{StaticResource TextMutedBrush}" />
                         </StackPanel>
-
-                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Button Content="🤖  Asistente" Margin="0,0,8,0" Style="{StaticResource GhostButton}" Click="OpenAgent_Click" />
-                            <Button Content="⚙️  Configuración IA" Margin="0,0,8,0" Style="{StaticResource GhostButton}" Click="OpenAiSettings_Click" />
-                            <Button Content="📄  Importar Proforma" Margin="0,0,8,0" Style="{StaticResource GhostButton}" Click="OpenImportPdf_Click" />
-                            <Button Content="📜  Historial Proformas" Margin="0,0,8,0" Style="{StaticResource GhostButton}" Click="OpenProformaHistory_Click" />
-                            <Button Content="📥  Importar BD" Margin="0,0,8,0" Style="{StaticResource GhostButton}" Click="ImportDatabase_Click" />
-                            <Button Content="📤  Exportar BD" Style="{StaticResource GhostButton}" Click="ExportDatabase_Click" />
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Ellipse x:Name="elAiStatus" Width="9" Height="9"
+                                     Fill="#CCCCCC" Margin="0,0,5,0" />
+                            <TextBlock x:Name="txtAiStatus" Text="Comprobando..."
+                                       FontSize="9" Foreground="{StaticResource TextMutedBrush}"
+                                       VerticalAlignment="Center" />
                         </StackPanel>
                     </Grid>
                 </Border>
 
-                <TabControl Grid.Row="1" Margin="16,12,16,16" Style="{StaticResource ModernTabControl}">
-                    <TabItem Header="Dashboard" Style="{StaticResource ModernTabItem}">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto">
-                            <StackPanel Margin="18,18,18,20">
-                                <Grid Margin="0,0,0,14">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Margin="0,4,0,0">
-                                        <TextBlock Text="RESUMEN GENERAL" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" />
-                                        <TextBlock Text="Panel Principal" FontSize="38" FontWeight="Black" />
-                                    </StackPanel>
-                                    <TextBlock Grid.Column="1" TextAlignment="Right" VerticalAlignment="Bottom" Foreground="{StaticResource TextMutedBrush}" Text="Gestión de ventas, proformas e inventario&#x0a;Flujo optimizado para operación diaria" />
-                                </Grid>
-
-                                <Grid Margin="0,0,0,14">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="2*" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-
-                                    <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}" Height="214" Margin="0,0,10,0" Background="{StaticResource TropicalYellowTintBrush}">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="220" />
-                                            </Grid.ColumnDefinitions>
-                                            <StackPanel VerticalAlignment="Center">
-                                                <TextBlock Text="Acción recomendada" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" />
-                                                <TextBlock Text="Crear nueva proforma" FontSize="27" FontWeight="Bold" Margin="0,4,0,8" />
-                                                <TextBlock TextWrapping="Wrap" Width="460" Foreground="{StaticResource TextMutedBrush}" Text="Empieza una cotización en menos de 1 minuto con cliente, items y total automático para exportar a PDF." />
-                                                <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
-                                                    <Button Width="190" Content="Nueva Proforma" Style="{StaticResource PrimaryButton}" Click="OpenNewProforma_Click" />
-                                                    <Button Width="170" Margin="8,0,0,0" Content="Gestionar Inventario" Click="OpenInventory_Click" />
-                                                </StackPanel>
-                                            </StackPanel>
-                                            <Border Grid.Column="1" Background="{StaticResource TropicalYellowBrush}" CornerRadius="12" Padding="16" Margin="12,0,0,0">
-                                                <StackPanel VerticalAlignment="Center">
-                                                    <TextBlock Text="Meta del día" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" />
-                                                    <TextBlock Text="12 Proformas" FontSize="24" FontWeight="Black" Foreground="{StaticResource BrandDarkBrush}" Margin="0,4,0,6" />
-                                                    <TextBlock Text="Foco: campañas de vinil e instalación" TextWrapping="Wrap" Foreground="{StaticResource TextMutedBrush}" />
-                                                </StackPanel>
-                                            </Border>
-                                        </Grid>
+                <!-- Chat messages -->
+                <ScrollViewer Grid.Row="1" x:Name="scrollChat"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              Padding="10,8">
+                    <ItemsControl x:Name="icMessages">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,0,0,8">
+                                    <Border HorizontalAlignment="Right"
+                                            Background="#069494" CornerRadius="14,14,2,14"
+                                            Padding="10,7" MaxWidth="280"
+                                            Visibility="{Binding IsUser, Converter={StaticResource BoolToVisible}}">
+                                        <TextBlock Text="{Binding Content}" Foreground="White"
+                                                   TextWrapping="Wrap" FontSize="12" />
                                     </Border>
-
-                                    <Border Grid.Column="1" Style="{StaticResource CardBorderStyle}" Height="214" Background="{StaticResource TropicalPinkTintBrush}">
-                                        <StackPanel>
-                                            <DockPanel Margin="0,0,0,8">
-                                                <TextBlock DockPanel.Dock="Left" Text="ESTADO DEL SISTEMA" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" />
-                                                <Ellipse DockPanel.Dock="Right" Width="10" Height="10" Fill="{StaticResource SuccessBrush}" />
-                                            </DockPanel>
-                                            <TextBlock Text="Operación estable" FontSize="20" FontWeight="Bold" Margin="0,0,0,10" />
-                                            <Grid>
-                                                <Grid.RowDefinitions>
-                                                    <RowDefinition Height="Auto" />
-                                                    <RowDefinition Height="Auto" />
-                                                    <RowDefinition Height="Auto" />
-                                                </Grid.RowDefinitions>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*" />
-                                                    <ColumnDefinition Width="Auto" />
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock Text="DB Local" Foreground="{StaticResource TextMutedBrush}" Margin="0,4" />
-                                                <TextBlock Grid.Column="1" Text="Connected" FontWeight="Bold" Margin="0,4" />
-                                                <TextBlock Grid.Row="1" Text="Cloud Sync" Foreground="{StaticResource TextMutedBrush}" Margin="0,4" />
-                                                <TextBlock Grid.Row="1" Grid.Column="1" Text="Idle" FontWeight="Bold" Margin="0,4" />
-                                                <TextBlock Grid.Row="2" Text="Latency" Foreground="{StaticResource TextMutedBrush}" Margin="0,4" />
-                                                <TextBlock Grid.Row="2" Grid.Column="1" Text="14ms" FontWeight="Bold" Margin="0,4" />
-                                            </Grid>
-                                            <TextBlock Margin="0,14,0,0" FontSize="10" Foreground="{StaticResource TextMutedBrush}" Text="Nodo operativo: NODE_PRC_091" />
-                                        </StackPanel>
+                                    <Border HorizontalAlignment="Left"
+                                            Background="#F0F0F0" CornerRadius="14,14,14,2"
+                                            Padding="10,7" MaxWidth="300"
+                                            Visibility="{Binding IsAgent, Converter={StaticResource BoolToVisible}}">
+                                        <TextBlock Text="{Binding Content}" Foreground="#1B1E1F"
+                                                   TextWrapping="Wrap" FontSize="12" />
                                     </Border>
                                 </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
 
-                                <UniformGrid Columns="3" Margin="0,0,0,14">
-                                    <Border Margin="0,0,8,0" Style="{StaticResource CardBorderStyle}">
-                                        <StackPanel>
-                                            <TextBlock Text="Productos en catálogo" FontSize="11" Foreground="{StaticResource TextMutedBrush}" FontWeight="Bold" />
-                                            <TextBlock x:Name="txtDashboardProducts" Text="0" FontSize="34" FontWeight="Black" />
-                                            <TextBlock x:Name="txtDashboardCategories" Text="0 categorías" Foreground="{StaticResource SuccessBrush}" FontSize="10" FontWeight="Bold" />
-                                        </StackPanel>
-                                    </Border>
-                                    <Border Margin="4,0" Style="{StaticResource CardBorderStyle}">
-                                        <StackPanel>
-                                            <TextBlock Text="Stock Total" FontSize="11" Foreground="{StaticResource TextMutedBrush}" FontWeight="Bold" />
-                                            <TextBlock x:Name="txtDashboardStock" Text="0" FontSize="34" FontWeight="Black" />
-                                            <TextBlock x:Name="txtDashboardAvgPrice" Text="Precio promedio: S/ 0.00" Foreground="{StaticResource BrandDarkBrush}" FontSize="10" FontWeight="Bold" />
-                                        </StackPanel>
-                                    </Border>
-                                    <Border Margin="8,0,0,0" Style="{StaticResource CardBorderStyle}" Background="{StaticResource TropicalYellowTintBrush}">
-                                        <StackPanel VerticalAlignment="Center">
-                                            <TextBlock Text="Atajo" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" />
-                                            <TextBlock Text="Actualiza tu stock" FontSize="23" FontWeight="Black" Margin="0,4,0,10" />
-                                            <Button Content="Abrir Inventario" Click="OpenInventory_Click" Style="{StaticResource PrimaryButton}" />
-                                        </StackPanel>
-                                    </Border>
-                                </UniformGrid>
+                <!-- Thinking indicator -->
+                <Border Grid.Row="2" x:Name="pnlThinking" Visibility="Collapsed"
+                        Padding="14,5" Background="{StaticResource TropicalYellowTintBrush}"
+                        BorderBrush="{StaticResource BorderSoftBrush}" BorderThickness="0,1,0,0">
+                    <TextBlock x:Name="txtThinking" Text="⏳ Pensando..."
+                               FontSize="11" Foreground="{StaticResource TextMutedBrush}"
+                               FontStyle="Italic" />
+                </Border>
 
-                                <Border Style="{StaticResource CardBorderStyle}" Padding="0,0,0,10">
-                                    <StackPanel>
-                                        <Grid Margin="16,14,16,10">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-                                            <TextBlock Text="Productos Recientes" FontSize="20" FontWeight="Bold" />
-                                            <TextBlock Grid.Column="1" Text="Fuente: SQLite" Foreground="{StaticResource BrandDarkBrush}" FontWeight="Bold" VerticalAlignment="Center" />
-                                        </Grid>
+                <!-- Chat input -->
+                <Border Grid.Row="3" BorderBrush="{StaticResource BorderSoftBrush}"
+                        BorderThickness="0,1,0,0" Padding="10,10">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
 
-                                        <DataGrid x:Name="dgRecentProducts"
-                                                  Margin="16,0,16,0"
-                                                  AutoGenerateColumns="False"
-                                                  CanUserAddRows="False"
-                                                  IsReadOnly="True"
-                                                  HeadersVisibility="Column">
-                                            <DataGrid.Columns>
-                                                <DataGridTextColumn Header="SKU" Binding="{Binding Sku}" Width="1.2*" />
-                                                <DataGridTextColumn Header="NOMBRE" Binding="{Binding Name}" Width="2.2*" />
-                                                <DataGridTextColumn Header="CATEGORÍA" Binding="{Binding Category}" Width="1.5*" />
-                                                <DataGridTextColumn Header="STOCK" Binding="{Binding StockDisplay}" Width="1.2*" />
-                                                <DataGridTextColumn Header="PRECIO" Binding="{Binding UnitPriceDisplay}" Width="1*" />
-                                            </DataGrid.Columns>
-                                        </DataGrid>
+                        <!-- Attachment indicator -->
+                        <DockPanel Grid.Row="0" Margin="2,0,2,5">
+                            <TextBlock x:Name="txtAttachment" Text="" Visibility="Collapsed"
+                                       Foreground="{StaticResource TextMutedBrush}" FontSize="10"
+                                       VerticalAlignment="Center" />
+                            <Button x:Name="btnClearAttachment" Visibility="Collapsed"
+                                    DockPanel.Dock="Right" Padding="4,2" Margin="6,0,0,0"
+                                    Background="Transparent" BorderThickness="0"
+                                    Foreground="#E74C3C" Cursor="Hand" ToolTip="Quitar archivo"
+                                    Click="ClearAttachment_Click">
+                                <TextBlock FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                           Text="&#xE74D;" FontSize="11" />
+                            </Button>
+                        </DockPanel>
 
-                                        <DockPanel Margin="16,10,16,0">
-                                            <TextBlock DockPanel.Dock="Left" Text="Métricas y datos listos para cotización inmediata" Foreground="{StaticResource TextMutedBrush}" />
-                                            <Button DockPanel.Dock="Right" Content="Ver inventario completo" Style="{StaticResource GhostButton}" Click="OpenInventory_Click" />
-                                        </DockPanel>
-                                    </StackPanel>
-                                </Border>
-                            </StackPanel>
-                        </ScrollViewer>
-                    </TabItem>
-
-                    <TabItem Header="Acciones" Style="{StaticResource ModernTabItem}">
-                        <Grid Margin="18">
+                        <!-- Input row -->
+                        <Grid Grid.Row="1">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-
-                            <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}" Margin="0,0,8,0" Background="{StaticResource TropicalYellowTintBrush}">
-                                <StackPanel VerticalAlignment="Center">
-                                    <TextBlock Text="Ventas" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" />
-                                    <TextBlock Text="Genera proformas con un clic" FontSize="27" FontWeight="Bold" Margin="0,6,0,10" />
-                                    <TextBlock Text="Prepara la cotización y exporta PDF sin salir del flujo principal." Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,0,0,14" />
-                                    <Button Width="220" Content="Abrir nueva proforma" Style="{StaticResource PrimaryButton}" Click="OpenNewProforma_Click" />
-                                </StackPanel>
+                            <Border CornerRadius="10" BorderBrush="{StaticResource BorderSoftBrush}"
+                                    BorderThickness="1" Background="White">
+                                <Grid>
+                                    <TextBlock x:Name="txtInputPlaceholder"
+                                               Text="Escribe... (Enter para enviar)"
+                                               Foreground="{StaticResource TextMutedBrush}"
+                                               FontSize="12" Margin="10,8,0,0"
+                                               IsHitTestVisible="False" VerticalAlignment="Top" />
+                                    <TextBox x:Name="txtInput" Padding="9,7"
+                                             BorderThickness="0" Background="Transparent"
+                                             TextWrapping="Wrap" AcceptsReturn="False"
+                                             MaxHeight="70" VerticalScrollBarVisibility="Auto"
+                                             FontSize="12"
+                                             KeyDown="TxtInput_KeyDown"
+                                             TextChanged="TxtInput_TextChanged" />
+                                </Grid>
                             </Border>
-
-                            <Border Grid.Column="1" Style="{StaticResource CardBorderStyle}" Margin="8,0,0,0" Background="{StaticResource TropicalPinkTintBrush}">
-                                <StackPanel VerticalAlignment="Center">
-                                    <TextBlock Text="Proformas" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" />
-                                    <TextBlock Text="Consulta historial guardado" FontSize="27" FontWeight="Bold" Margin="0,6,0,10" />
-                                    <TextBlock Text="Busca cotizaciones anteriores por código, cliente o RUC y revisa montos rápidamente." Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,0,0,14" />
-                                    <Button Width="220" Content="Abrir historial" Click="OpenProformaHistory_Click" />
-                                </StackPanel>
-                            </Border>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal"
+                                        VerticalAlignment="Bottom" Margin="6,0,0,0">
+                                <Button x:Name="btnAttach"
+                                        Content="&#xE723;"
+                                        FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                        Width="36" Height="34" FontSize="14" Margin="0,0,5,0"
+                                        Background="Transparent"
+                                        BorderThickness="1" BorderBrush="{StaticResource BorderSoftBrush}"
+                                        Foreground="{StaticResource TextMutedBrush}"
+                                        Cursor="Hand" ToolTip="Adjuntar archivo"
+                                        Click="AttachFile_Click" />
+                                <Button x:Name="btnSend" Content="➤"
+                                        Width="36" Height="34" FontSize="14"
+                                        Style="{StaticResource PrimaryButton}"
+                                        Click="BtnSend_Click" />
+                            </StackPanel>
                         </Grid>
-                    </TabItem>
-                </TabControl>
+                    </Grid>
+                </Border>
             </Grid>
         </Border>
     </Grid>

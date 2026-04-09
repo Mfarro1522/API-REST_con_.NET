@@ -183,7 +183,7 @@ namespace MakriFormas.Services
 
         // ── Parser + Dispatcher ───────────────────────────────────────────────
 
-        private static bool TryParseAndDispatch(string raw, out AgentResponse? result)
+        internal static bool TryParseAndDispatch(string raw, out AgentResponse? result)
         {
             result = null;
 

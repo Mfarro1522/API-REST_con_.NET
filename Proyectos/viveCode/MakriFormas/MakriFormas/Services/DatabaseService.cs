@@ -13,15 +13,21 @@ namespace MakriFormas.Services
     {
         private const string DatabaseFileName = "makriformas.db";
 
+        /// <summary>Solo para tests: redirige todas las operaciones a esta ruta temporal.</summary>
+        internal static string? _testDatabasePath;
+
         public static string DatabaseDirectory => Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "MakriFormas");
 
-        public static string DatabasePath => Path.Combine(DatabaseDirectory, DatabaseFileName);
+        public static string DatabasePath =>
+            _testDatabasePath ?? Path.Combine(DatabaseDirectory, DatabaseFileName);
 
         public static void Initialize()
         {
-            Directory.CreateDirectory(DatabaseDirectory);
+            // En modo test (URI de memoria) no creamos directorios en disco
+            if (_testDatabasePath == null)
+                Directory.CreateDirectory(DatabaseDirectory);
 
             using var connection = CreateConnection(DatabasePath);
             connection.Open();
@@ -371,9 +377,10 @@ namespace MakriFormas.Services
                     items.Add(item);
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // If JSON is malformed, return empty list
+                System.Diagnostics.Debug.WriteLine($"[DB] Error al deserializar ítems de proforma: {ex.Message}");
+                // JSON malformed — return empty list to avoid data corruption
             }
 
             return items;
@@ -420,6 +427,10 @@ namespace MakriFormas.Services
 
         private static SqliteConnection CreateConnection(string databasePath)
         {
+            // Si es una URI SQLite (p.ej. file:name?mode=memory&cache=shared), usarla directamente
+            if (databasePath.StartsWith("file:", StringComparison.OrdinalIgnoreCase))
+                return new SqliteConnection($"Data Source={databasePath}");
+
             return new SqliteConnection($"Data Source={databasePath};Mode=ReadWriteCreate");
         }
 

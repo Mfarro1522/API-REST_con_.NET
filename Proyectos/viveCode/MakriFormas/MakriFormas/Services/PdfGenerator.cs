@@ -15,6 +15,10 @@ namespace MakriFormas.Services
         {
             QuestPDF.Settings.License = LicenseType.Community;
 
+            var layout = PdfLayoutConfigService.Load();
+            var effectiveTableWidth = Math.Max(layout.TableWidth,
+                layout.TableQtyWidth + layout.TableDescWidth + layout.TableUnitWidth + layout.TableTotalWidth);
+
             var templateBytes = File.ReadAllBytes(ResolveTemplatePath());
             var printableItems = items?.Where(x => x.Cantidad > 0).ToList() ?? new List<ProformaItem>();
             var documentDate = DateTime.Now;
@@ -29,143 +33,170 @@ namespace MakriFormas.Services
                     page.Size(PageSizes.A4);
                     page.Margin(0, Unit.Point);
                     page.PageColor(Colors.White);
-                    page.DefaultTextStyle(x => x.FontSize(8.5f).FontFamily(Fonts.Arial));
+                    page.DefaultTextStyle(x => x.FontFamily(Fonts.Arial));
 
                     page.Background().Image(templateBytes).FitArea();
 
                     page.Content().Layers(layers =>
                     {
-                        layers.PrimaryLayer().Column(col =>
+                        layers.PrimaryLayer().Element(container =>
                         {
-                            col.Item()
-                                .PaddingTop(Layout.DateLabelY)
-                                .PaddingLeft(Layout.DateLabelX)
+                            container
+                                .PaddingLeft(layout.DateLabelX)
+                                .PaddingTop(layout.DateLabelY)
                                 .Text("Fecha :")
-                                .FontSize(18)
+                                .FontSize(layout.DateLabelFontSize)
                                 .SemiBold();
+                        });
 
-                            col.Item()
-                                .PaddingTop(Layout.DateGapY)
-                                .PaddingLeft(Layout.DateX)
+                        DrawLayerElement(layers, layout.DateValueX, layout.DateValueY, container =>
+                        {
+                            container
                                 .Text(documentDate.ToString("dd/MM/yyyy"))
-                                .FontSize(18)
+                                .FontSize(layout.DateValueFontSize)
                                 .SemiBold();
+                        });
 
-                            col.Item()
-                                .PaddingTop(Layout.ClientGapY)
-                                .PaddingLeft(Layout.ClientX)
+                        DrawLayerElement(layers, layout.NameX, layout.NameY, container =>
+                        {
+                            container
                                 .Text($"Nombre: {safeClientName}")
-                                .FontSize(9);
+                                .FontSize(layout.NameFontSize);
+                        });
 
-                            col.Item()
-                                .PaddingTop(Layout.RucGapY)
-                                .PaddingLeft(Layout.RucX)
+                        DrawLayerElement(layers, layout.RucX, layout.RucY, container =>
+                        {
+                            container
                                 .Text($"RUC: {safeRuc}")
-                                .FontSize(9);
+                                .FontSize(layout.RucFontSize);
+                        });
 
-                            col.Item()
-                                .PaddingTop(Layout.ProformaGapY)
-                                .PaddingLeft(Layout.TableX)
-                                .Width(Layout.TableWidth)
+                        DrawLayerElement(layers, layout.TitleX, layout.TitleY, container =>
+                        {
+                            container
+                                .Width(effectiveTableWidth)
                                 .AlignCenter()
                                 .Text("PROFORMA")
-                                .FontSize(22)
+                                .FontSize(layout.TitleFontSize)
                                 .SemiBold()
                                 .Underline();
+                        });
 
-                            col.Item()
-                                .PaddingTop(Layout.HeaderGapY)
-                                .PaddingLeft(Layout.TableX)
-                                .Width(Layout.TableWidth)
+                        DrawLayerElement(layers, layout.TableHeaderX, layout.TableHeaderY, container =>
+                        {
+                            container
+                                .Width(effectiveTableWidth)
                                 .Row(row =>
                                 {
-                                    row.ConstantItem(Layout.QtyWidth).AlignCenter().Text("CANT.").FontSize(8).SemiBold();
-                                    row.ConstantItem(Layout.DescWidth).AlignCenter().Text("DESCRIPCION").FontSize(8).SemiBold();
-                                    row.ConstantItem(Layout.UnitWidth).AlignCenter().Text("P. UNIT").FontSize(8).SemiBold();
-                                    row.ConstantItem(Layout.TotalWidth).AlignCenter().Text("P. TOTAL").FontSize(8).SemiBold();
+                                    row.ConstantItem(layout.TableQtyWidth).AlignCenter().Text("CANT.").FontSize(layout.TableHeaderFontSize).SemiBold();
+                                    row.ConstantItem(layout.TableDescWidth).AlignCenter().Text("DESCRIPCION").FontSize(layout.TableHeaderFontSize).SemiBold();
+                                    row.ConstantItem(layout.TableUnitWidth).AlignCenter().Text("P. UNIT").FontSize(layout.TableHeaderFontSize).SemiBold();
+                                    row.ConstantItem(layout.TableTotalWidth).AlignCenter().Text("P. TOTAL").FontSize(layout.TableHeaderFontSize).SemiBold();
                                 });
+                        });
 
-                            col.Item()
-                                .PaddingTop(Layout.TableGapY)
-                                .PaddingLeft(Layout.TableX)
-                                .Width(Layout.TableWidth)
-                                .Height(Layout.TableHeight)
-                                .Border(0.5f)
+                        DrawLayerElement(layers, layout.TableX, layout.TableY, container =>
+                        {
+                            container
+                                .Width(effectiveTableWidth)
+                                .Height(layout.TableHeight)
+                                .Border(layout.TableBorderThickness)
                                 .BorderColor("#1A1A1A")
                                 .Row(row =>
                                 {
-                                    row.ConstantItem(Layout.QtyWidth).Element(ColumnDividerStyle).Column(qtyCol =>
+                                    row.ConstantItem(layout.TableQtyWidth).Element(ColumnDividerStyle).Column(qtyCol =>
                                     {
-                                        for (var i = 0; i < Layout.MaxRows; i++)
+                                        for (var i = 0; i < layout.TableMaxRows; i++)
                                         {
                                             var item = i < printableItems.Count ? printableItems[i] : null;
-                                            qtyCol.Item().Height(Layout.RowHeight)
+                                            qtyCol.Item()
+                                                .Height(layout.TableRowHeight)
                                                 .AlignCenter().AlignMiddle()
                                                 .Text(item != null ? FormatQuantity(item) : string.Empty)
-                                                .FontSize(8);
+                                                .FontSize(layout.TableBodyFontSize);
                                         }
                                     });
 
-                                    row.ConstantItem(Layout.DescWidth).Element(ColumnDividerStyle).Column(descCol =>
+                                    row.ConstantItem(layout.TableDescWidth).Element(ColumnDividerStyle).Column(descCol =>
                                     {
-                                        for (var i = 0; i < Layout.MaxRows; i++)
+                                        for (var i = 0; i < layout.TableMaxRows; i++)
                                         {
                                             var item = i < printableItems.Count ? printableItems[i] : null;
-                                            descCol.Item().Height(Layout.RowHeight).PaddingLeft(2)
+                                            descCol.Item().PaddingLeft(2)
+                                                .Height(layout.TableRowHeight)
+                                                .AlignMiddle()
                                                 .Text(BuildDescription(item))
-                                                .FontSize(8)
+                                                .FontSize(layout.TableBodyFontSize)
                                                 .ClampLines(2);
                                         }
                                     });
 
-                                    row.ConstantItem(Layout.UnitWidth).Element(ColumnDividerStyle).Column(unitCol =>
+                                    row.ConstantItem(layout.TableUnitWidth).Element(ColumnDividerStyle).Column(unitCol =>
                                     {
-                                        for (var i = 0; i < Layout.MaxRows; i++)
+                                        for (var i = 0; i < layout.TableMaxRows; i++)
                                         {
                                             var item = i < printableItems.Count ? printableItems[i] : null;
-                                            unitCol.Item().Height(Layout.RowHeight).PaddingRight(2)
+                                            unitCol.Item().PaddingRight(2)
+                                                .Height(layout.TableRowHeight)
                                                 .AlignRight().AlignMiddle()
                                                 .Text(item != null ? $"S/ {item.UnitPrice:N2}" : string.Empty)
-                                                .FontSize(8);
+                                                .FontSize(layout.TableBodyFontSize);
                                         }
                                     });
 
-                                    row.ConstantItem(Layout.TotalWidth).PaddingRight(2).Column(totalCol =>
+                                    row.ConstantItem(layout.TableTotalWidth).PaddingRight(2).Column(totalCol =>
                                     {
-                                        for (var i = 0; i < Layout.MaxRows; i++)
+                                        for (var i = 0; i < layout.TableMaxRows; i++)
                                         {
                                             var item = i < printableItems.Count ? printableItems[i] : null;
-                                            totalCol.Item().Height(Layout.RowHeight)
+                                            totalCol.Item()
+                                                .Height(layout.TableRowHeight)
                                                 .AlignRight().AlignMiddle()
                                                 .Text(item != null ? $"S/ {item.Total:N2}" : string.Empty)
-                                                .FontSize(8);
+                                                .FontSize(layout.TableBodyFontSize);
                                         }
                                     });
                                 });
+                        });
 
-                            col.Item()
-                                .PaddingTop(Layout.TotalGapY)
-                                .PaddingLeft(Layout.TableX)
-                                .Width(Layout.TableWidth)
+                        DrawLayerElement(layers, layout.TotalX, layout.TotalY, container =>
+                        {
+                            container
+                                .Width(effectiveTableWidth)
                                 .AlignRight()
                                 .Text($"S/ {total:N2}")
+                                .FontSize(layout.TotalFontSize)
                                 .SemiBold();
+                        });
 
-                            col.Item()
-                                .PaddingTop(Layout.DeliveryGapY)
-                                .PaddingLeft(Layout.DeliveryX)
+                        DrawLayerElement(layers, layout.DeliveryX, layout.DeliveryY, container =>
+                        {
+                            container
                                 .Text($"Fecha de entrega: {deliveryDate}")
-                                .FontSize(8);
+                                .FontSize(layout.DeliveryFontSize);
+                        });
 
-                            col.Item()
-                                .PaddingTop(Layout.ValidityGapY)
-                                .PaddingLeft(Layout.ValidityX)
+                        DrawLayerElement(layers, layout.ValidityX, layout.ValidityY, container =>
+                        {
+                            container
                                 .Text("Validez: 10 dias")
-                                .FontSize(8);
+                                .FontSize(layout.ValidityFontSize);
                         });
                     });
                 });
             }).GeneratePdf(filePath);
+        }
+
+        private static void DrawLayerElement(LayersDescriptor layers, float x, float y, Action<IContainer> draw)
+        {
+            layers.Layer().Element(container =>
+            {
+                var positioned = container
+                    .PaddingLeft(x)
+                    .PaddingTop(y);
+
+                draw(positioned);
+            });
         }
 
         private static string ResolveTemplatePath()
@@ -243,46 +274,6 @@ namespace MakriFormas.Services
             }
 
             return trimmed;
-        }
-
-        // Ajusta estas coordenadas para calibrar el contenido sobre la plantilla.
-        private static class Layout
-        {
-            public const float DateLabelX = 180;
-            public const float DateLabelY = 35;
-
-            public const float DateX = 180;
-            public const float DateGapY = 2;
-
-            public const float ClientX = 160;
-            public const float ClientGapY = 87;
-
-            public const float RucX = 160;
-            public const float RucGapY = 16;
-
-            public const float ProformaGapY = 18;
-            public const float HeaderGapY = 4;
-
-            public const float TableX = 154;
-            public const float TableGapY = 6;
-            public const float TableWidth = 352;
-            public const float TableHeight = 248;
-            public const float RowHeight = 15;
-            public const int MaxRows = 15;
-
-            public const float QtyWidth = 38;
-            public const float DescWidth = 190;
-            public const float UnitWidth = 58;
-            public const float TotalWidth = 66;
-
-            public const float TotalX = 448;
-            public const float TotalGapY = 2;
-
-            public const float DeliveryX = 176;
-            public const float DeliveryGapY = 12;
-
-            public const float ValidityX = 176;
-            public const float ValidityGapY = 5;
         }
     }
 }

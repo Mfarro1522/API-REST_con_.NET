@@ -1,0 +1,60 @@
+{
+  "unidades": [
+    {
+      "clave": "unidad",
+      "etiqueta": "Unidad",
+      "calculo": "cantidad",
+      "campos": [ "cantidad" ],
+      "ejemplo": "tazas, placas, gorras"
+    },
+    {
+      "clave": "m2",
+      "etiqueta": "m²",
+      "calculo": "ancho * alto * cantidad",
+      "campos": [ "ancho", "alto", "cantidad" ],
+      "ejemplo": "vinil, lona, banner"
+    },
+    {
+      "clave": "metro",
+      "etiqueta": "Metro",
+      "calculo": "longitud * cantidad",
+      "campos": [ "longitud", "cantidad" ],
+      "ejemplo": "cinta, perfil, filete"
+    },
+    {
+      "clave": "kg",
+      "etiqueta": "Kg",
+      "calculo": "cantidad",
+      "campos": [ "cantidad" ],
+      "ejemplo": "resina, tinta a granel"
+    },
+    {
+      "clave": "millares",
+      "etiqueta": "Millares",
+      "calculo": "cantidad",
+      "campos": [ "cantidad" ],
+      "ejemplo": "tarjetas, volantes"
+    },
+    {
+      "clave": "cientos",
+      "etiqueta": "Cientos",
+      "calculo": "cantidad",
+      "campos": [ "cantidad" ],
+      "ejemplo": "hojas, folletos"
+    },
+    {
+      "clave": "cm",
+      "etiqueta": "cm",
+      "calculo": "longitud * cantidad",
+      "campos": [ "longitud", "cantidad" ],
+      "ejemplo": "listón, bordado"
+    },
+    {
+      "clave": "cm2",
+      "etiqueta": "cm²",
+      "calculo": "ancho * alto * cantidad",
+      "campos": [ "ancho", "alto", "cantidad" ],
+      "ejemplo": "etiquetas pequeñas, stickers"
+    }
+  ]
+}

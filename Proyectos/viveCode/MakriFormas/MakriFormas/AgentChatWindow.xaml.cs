@@ -42,6 +42,12 @@ namespace MakriFormas
         /// <summary>Se dispara cuando el agente cambió algo en la DB.</summary>
         public event EventHandler? DbChanged;
 
+        /// <summary>
+        /// Se dispara cuando el agente quiere crear una proforma con datos pre-llenados.
+        /// El suscriptor (MainWindow) debe navegar a la vista de proforma y llamar PreFill().
+        /// </summary>
+        public event EventHandler<ProformaPreFillData>? ProformaRequested;
+
         private CancellationTokenSource? _cts;
         private string? _attachedFilePath;
         private const int MaxAttachmentContextChars = 20000;
@@ -176,23 +182,10 @@ namespace MakriFormas
                     });
                 }
 
-                // ── Acción: crear proforma ────────────────────────────────────
+                // ── Acción: crear proforma ─────────────────────────────────────
                 if (response.Data is ProformaPreFillData prefill)
                 {
-                    Dispatcher.Invoke(() =>
-                    {
-                        var proformaWin = new NewProformaWindow();
-
-                        // Heredar owner si es posible
-                        if (Owner != null)
-                            proformaWin.Owner = Owner;
-
-                        proformaWin.Show();
-                        proformaWin.PreFill(prefill);
-
-                        // Cuando se guarde la proforma, notificar el dashboard
-                        proformaWin.Closed += (_, _) => DbChanged?.Invoke(this, EventArgs.Empty);
-                    });
+                    Dispatcher.Invoke(() => ProformaRequested?.Invoke(this, prefill));
                 }
 
                 // Si el agente cambió la DB directamente (add_product, etc.)

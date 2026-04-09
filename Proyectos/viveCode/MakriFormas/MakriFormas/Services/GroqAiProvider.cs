@@ -114,8 +114,9 @@ namespace MakriFormas.Services
 
                 return content.GetString() ?? string.Empty;
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"[GroqAI] Error al parsear respuesta de texto: {ex.Message}");
                 return string.Empty;
             }
         }
@@ -135,8 +136,9 @@ namespace MakriFormas.Services
                         return msg.GetString() ?? "Error desconocido en Groq.";
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"[GroqAI] Error al parsear mensaje de error: {ex.Message}");
                 // ignore
             }
 

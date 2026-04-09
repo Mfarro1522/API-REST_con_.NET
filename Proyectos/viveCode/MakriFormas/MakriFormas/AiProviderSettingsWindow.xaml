@@ -63,6 +63,23 @@
 
                         <TextBlock Text="Solo se muestran modelos baratos predefinidos para evitar costos altos al cliente."
                                    Foreground="{StaticResource TextMutedBrush}" FontSize="11" FontStyle="Italic" />
+
+                        <Border Style="{StaticResource CardBorderStyle}" Padding="14" Margin="0,12,0,0">
+                            <StackPanel>
+                                <TextBlock Text="Layout de PDF (avanzado)" FontWeight="Bold" FontSize="14" />
+                                <TextBlock Text="Ajusta posiciones (x,y), tamaños y medidas de la tabla editando el archivo .conf."
+                                           Foreground="{StaticResource TextMutedBrush}" FontSize="11" Margin="0,2,0,8" />
+                                <TextBlock x:Name="txtPdfLayoutPath"
+                                           Foreground="{StaticResource TextMutedBrush}"
+                                           FontSize="11"
+                                           TextWrapping="Wrap"
+                                           Margin="0,0,0,8" />
+                                <Button Content="Editar distribucion y tamano PDF (.conf)"
+                                        HorizontalAlignment="Left"
+                                        Padding="12,8"
+                                        Click="OpenPdfLayoutConfig_Click" />
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
                 </ScrollViewer>
 

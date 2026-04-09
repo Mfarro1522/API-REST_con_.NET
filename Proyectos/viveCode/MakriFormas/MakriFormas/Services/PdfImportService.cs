@@ -321,7 +321,7 @@ namespace MakriFormas.Services
             return parsed;
         }
 
-        private static List<ImportedProductDto> ParseProductList(string json)
+        internal static List<ImportedProductDto> ParseProductList(string json)
         {
             var result = new List<ImportedProductDto>();
             try
@@ -398,7 +398,7 @@ namespace MakriFormas.Services
             return new ImportResult(newItems, exactDupes, priceChanged);
         }
 
-        private static Product? FindClosestProduct(string name, List<Product> products)
+        internal static Product? FindClosestProduct(string name, List<Product> products)
         {
             if (string.IsNullOrWhiteSpace(name)) return null;
 
@@ -426,7 +426,7 @@ namespace MakriFormas.Services
 
         // ── Levenshtein ───────────────────────────────────────────────────────
 
-        private static int Levenshtein(string a, string b)
+        internal static int Levenshtein(string a, string b)
         {
             if (a.Length == 0) return b.Length;
             if (b.Length == 0) return a.Length;

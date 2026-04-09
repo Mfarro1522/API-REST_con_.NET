@@ -9,6 +9,13 @@
     <ApplicationIcon>makriLogo.ico</ApplicationIcon>
   </PropertyGroup>
 
+  <!-- Permite que el proyecto de tests acceda a los miembros internal -->
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>MakriFormas.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="itext7" Version="9.6.0" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.0-preview.3.25171.6" />
@@ -18,6 +25,15 @@
   <ItemGroup>
     <None Update="proformaBase.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
+    <None Update="pdf_layout.conf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
+    <None Update="config\pdf_layout.conf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </None>
     <None Update="config\unidades_negocio.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

@@ -205,8 +205,9 @@ namespace MakriFormas.Services
                 ModelCacheExpiresAtUtc = DateTime.UtcNow.AddMinutes(10);
                 return parsed.ToList();
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"[GeminiAI] Error al obtener lista de modelos: {ex.Message}");
                 return new List<string>();
             }
             finally
@@ -248,8 +249,9 @@ namespace MakriFormas.Services
                     }
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"[GeminiAI] Error al parsear lista de modelos: {ex.Message}");
                 return new List<string>();
             }
 
@@ -304,8 +306,9 @@ namespace MakriFormas.Services
 
                 return string.Join("\n", chunks).Trim();
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"[GeminiAI] Error al parsear respuesta de texto: {ex.Message}");
                 return string.Empty;
             }
         }
@@ -325,8 +328,9 @@ namespace MakriFormas.Services
                         return msg.GetString() ?? "Error desconocido en Google Gemini.";
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"[GeminiAI] Error al parsear mensaje de error: {ex.Message}");
                 // ignore parse errors
             }
 

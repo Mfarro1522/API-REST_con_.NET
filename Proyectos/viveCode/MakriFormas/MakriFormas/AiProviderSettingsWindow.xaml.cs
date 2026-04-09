@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using MakriFormas.Services;
@@ -15,6 +16,9 @@ namespace MakriFormas
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
+            PdfLayoutConfigService.EnsureConfigFileExists();
+            txtPdfLayoutPath.Text = $"Activo (mas reciente): {PdfLayoutConfigService.GetConfigPath()}";
+
             cmbGoogleChatModel.ItemsSource = AiSettingsService.GetGoogleCheapModels().ToList();
             cmbGoogleVisionModel.ItemsSource = AiSettingsService.GetGoogleCheapModels().ToList();
             cmbGroqChatModel.ItemsSource = AiSettingsService.GetGroqCheapModels().ToList();
@@ -39,6 +43,25 @@ namespace MakriFormas
                 : "Clave Groq configurada.";
 
             txtSaveStatus.Text = "";
+        }
+
+        private void OpenPdfLayoutConfig_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var path = PdfLayoutConfigService.GetConfigPath();
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = path,
+                    UseShellExecute = true
+                });
+
+                txtSaveStatus.Text = $"Archivo activo abierto: {path}";
+            }
+            catch (Exception ex)
+            {
+                txtSaveStatus.Text = $"No se pudo abrir el .conf: {ex.Message}";
+            }
         }
 
         private void Save_Click(object sender, RoutedEventArgs e)

@@ -7,6 +7,7 @@ A continuación, los pasos para que en futuras versiones simplemente generes y d
 ### Requisitos en tu Máquina (Desarrollo)
 1. Tener [Inno Setup 6](https://jrsoftware.org/isdl.php) instalado (si quieres generar un instalador tipo "Siguiente > Siguiente > Instalar").
 2. Tener el SDK de .NET 10.
+3. tener el png base de la proforma se llama 'proformaBase.png'
 
 ### Método 1: Crear un Instalador (.exe) Automático
 Los archivos de la versión anterior (`build_installer.ps1` y `MakriFormas.iss`) se han adaptado para funcionar con la versión actual (he añadido un parámetro extra para asegurar que las librerías nativas como SQLite queden dentro del archivo único).
@@ -25,6 +26,14 @@ dotnet publish MakriFormas/MakriFormas.csproj -c Release -r win-x64 --self-conta
 ```
 
 El archivo resultante (`MakriFormas.exe`) aparecerá dentro de `MakriFormas/bin/Release/net10.0-windows10.0.17763.0/win-x64/publish/` y es 100% independiente de cualquier instalación.
+
+### Importante: Layout PDF editable en raíz
+La aplicación usa un archivo de configuración llamado `pdf_layout.conf` para posiciones y tamaños del PDF.
+
+1. Este archivo debe estar en la carpeta raíz del despliegue, junto a `MakriFormas.exe`.
+2. Si no existe, cópialo desde `MakriFormas/pdf_layout.conf`.
+3. Si existe también una versión en `config/pdf_layout.conf`, la aplicación prioriza el de la raíz.
+4. Incluye siempre este archivo en cualquier instalador o paquete portable que envíes al cliente.
 
 ### Conclusión sobre Dependencias
 Nuevamente, este `.exe` (o el instalador generado con Inno Setup) contiene todas las DLLs de WPF y QuestPDF/iText y la Runtime de .NET. Funciona "Out Of The Box" en prácticamente cualquier Windows x64.
